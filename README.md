@@ -21,3 +21,14 @@ Other improvements include:
 * Logging of source URLs
 * Multiple user agent support
 * Better error handling
+
+How you can help
+----------------
+
+Aside from pull requests, non-developers can open issues on [Github](https://github.com/technoskald/maltrieve). Things we'd really appreciate:
+
+* Bug reports, preferably with error logs
+* Suggestions of additional sources for malware lists
+* Descriptions of how you use it and ways we can improve it for you
+
+If you'd prefer not to open an issue, you can [contact me on Twitter](https://twitter.com/kylemaxwell) or [email](mailto:krmaxwell@gmail.com).
