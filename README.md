@@ -9,3 +9,11 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 * [Malc0de](http://malc0de.com/rss)
 * [Malware Black List](http://www.malwareblacklist.com/mbl.xml)
 * [Sacour.cn](http://www.sacour.cn)
+
+Other improvements include:
+
+* Proxy support
+* Multithreading for improved performance
+* Logging of source URLs
+* Multiple user agent support
+* Better error handling
