@@ -18,19 +18,26 @@
 
 from bs4 import BeautifulSoup
 import urllib2, logging, argparse, tempfile, re
+from threading import Thread 
+from Queue import Queue
 import xml.etree.ElementTree as ET
 
 from malutil import *
 
-def addmalwareurl(url):
-    #TODO: implement queue
-    return
+malq = Queue()
+NUMTHREADS = 4
 
-# --------------
-# Source parsing
-# --------------
+def getmalware(q):
+    while True:
+        logging.info("Fetching URL from queue")
+        url=q.get()
+        mal = geturl(url)
+        # hash the malware
+        # if we don't already have it, determine file type
+	# store the file and log the data
+        q.task_done()
 
-def maldl(url):
+def getxmllist(url):
     malwareurls = []
 
     tree = getxml(url)
@@ -46,7 +53,7 @@ def maldl(url):
         malwareurls.append(url)
 
     for url in malwareurls:
-        addmalwareurl(url)
+        malq.put(url)
 
 # ----
 # Main
@@ -100,22 +107,27 @@ if __name__ == "__main__":
     else:
         logging.basicConfig(level=logging.DEBUG, format='%(asctime) %message(s)', datefmt='%Y-%m-%d %H:%M:%S')
 
-# sources:
-maldl('http://www.malwaredomainlist.com/hostslist/mdl.xml')
-maldl('http://malc0de.com/rss')
+for i in range(NUMTHREADS):
+    worker = Thread(target=getmalware, args=(malq,))
+    worker.setDaemon(True)
+    worker.start()
 
+# sources:
+getxmllist('http://www.malwaredomainlist.com/hostslist/mdl.xml')
+getxmllist('http://malc0de.com/rss')
+
+# wrap these in a function
 for url in geturl('http://vxvault.siri-urz.net/URL_List.php'):
     if re.match('http', url):
-        addmalwareurl(url)
+        malq.put(url)
 
 sacour=geturl('http://www.sacour.cn/showmal.asp?month=%d&year=%d' % (now.month, now.year)).read()
 for url in re.sub('\<[^>]*\>','\n',sacourtext).splitlines():
-    addmalwareurl(url)
-
-
+    malq.put(url)
 
 # appears offline
 # minotaur(parse('http://minotauranalysis.com/malwarelist-urls.aspx'))
 # appears offline
 # malwarebl(parse('http://www.malwareblacklist.com/mbl.xml'))
 
+malq.join()
