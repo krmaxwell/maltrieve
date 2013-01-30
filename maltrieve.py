@@ -22,6 +22,7 @@ import argparse
 import tempfile
 import re
 import hashlib
+import os
 import xml.etree.ElementTree as ET
 from threading import Thread 
 from Queue import Queue
@@ -41,7 +42,7 @@ def get_malware(q):
         logging.info("Fetched URL %s from queue", url)
         mal = get_URL(url)
         md5 = hashlib.md5(mal).hexdigest()
-        # Is this a race condition?
+        # Is this a big race condition problem?
         if md5 not in hashes:
             logging.info("Found file %s at URL %s", md5, url)
 	    # store the file and log the data
@@ -131,6 +132,14 @@ if __name__ == "__main__":
         logging.basicConfig(level=logging.DEBUG, format='%(asctime) %message(s)', 
                             datefmt='%Y-%m-%d %H:%M:%S')
 
+    if os.path.exists('hashes.obj'):
+        with open('hashes.obj','rb') as hashfile:
+            hashes = pickle.load(hashfile)
+
+    if os.path.exists('urls.obj'):
+        with open('urls.obj', 'rb') as urlfile:
+            pasturls = pickle.load(urlfile)
+
     for i in range(NUMTHREADS):
         worker = Thread(target=get_malware, args=(malq,))
         worker.setDaemon(True)
@@ -155,3 +164,9 @@ if __name__ == "__main__":
     # malwarebl(parse('http://www.malwareblacklist.com/mbl.xml'))
     
     malq.join()
+
+    with open('hashes.obj','wb') as hashfile:
+        pickle.dump(hashfile, hashes)
+
+    with open('urls.obj', 'wb') as urlfile:
+        pickle.dump(urlfile, pasturls)
