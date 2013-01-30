@@ -16,24 +16,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/
 
-from bs4 import BeautifulSoup
-import urllib2, logging, argparse, tempfile, re
+import urllib2
+import logging
+import argparse
+import tempfile
+import re
+import hashlib
+import xml.etree.ElementTree as ET
 from threading import Thread 
 from Queue import Queue
-import xml.etree.ElementTree as ET
+
+from bs4 import BeautifulSoup
 
 from malutil import *
 
 NUMTHREADS = 4
+hashes = set()
+pasturls = set()
+dumpdir = ''
 
 def getmalware(q):
     while True:
-        logging.info("Fetching URL from queue")
-        url=q.get()
+        url = q.get()
+        logging.info("Fetched URL %s from queue", url)
         mal = geturl(url)
-        # hash the malware
-        # if we don't already have it, determine file type
-	# store the file and log the data
+        md5 = hashlib.md5(mal).hexdigest()
+        # Is this a race condition?
+        if md5 not in hashes:
+            logging.info("Found file %s at URL %s", md5, url)
+	    # store the file and log the data
+            with open(os.path.join(dumpdir, md5), 'wb') as f:
+                f.write(mal)
+            hashes.add(md5)
+            pasturls.add(url)
         q.task_done()
 
 def getxmllist(url,q):
@@ -67,9 +82,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
 #   parser.add_argument("-t", "--thug", help="Enable thug analysis", action="store_true")
-    parser.add_argument("-p", "--proxy", help="Define HTTP proxy as address:port")
-    parser.add_argument("-d", "--dumpdir", help="Define dump directory for retrieved files")
-    parser.add_argument("-l", "--logfile", help="Define file for logging progress")
+    parser.add_argument("-p", "--proxy", 
+                        help="Define HTTP proxy as address:port")
+    parser.add_argument("-d", "--dumpdir", 
+                        help="Define dump directory for retrieved files")
+    parser.add_argument("-l", "--logfile", 
+                        help="Define file for logging progress")
     args = parser.parse_args()
 
     # Enable thug support 
@@ -83,7 +101,6 @@ if __name__ == "__main__":
         logging.warning('Could not enable thug (%s)', e)
     '''
 
-    # proxy support
     if args.proxy:
         proxy = urllib2.ProxyHandler({'http': args.proxy})
         opener = urllib2.build_opener(proxy)
@@ -92,14 +109,14 @@ if __name__ == "__main__":
         my_ip = urllib2.urlopen('http://whatthehellismyip.com/?ipraw').read()
         logging.info('External sites see %s',my_ip)
 
-    # dump directory
     # http://stackoverflow.com/questions/14574889/verify-directory-write-privileges
     if args.dumpdir:
         try:
             d = tempfile.mkdtemp(dir=args.dumpdir)
             dumpdir=args.dumpdir
         except Exception as e:
-            logging.error('Could not open %s for writing (%s), using default', dumpdir, e)
+            logging.error('Could not open %s for writing (%s), using default', 
+                          dumpdir, e)
             dumpdir = '/tmp/malware/unsorted'
         else:
             os.rmdir(d)
@@ -107,25 +124,28 @@ if __name__ == "__main__":
         dumpdir = '/tmp/malware/unsorted'
 
     if args.logfile:
-        logging.basicConfig(filename=args.logfile, level=logging.DEBUG, format='%(asctime)s %(thread)d %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        logging.basicConfig(filename=args.logfile, level=logging.DEBUG, 
+                            format='%(asctime)s %(thread)d %(message)s', 
+                            datefmt='%Y-%m-%d %H:%M:%S')
     else:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime) %message(s)', datefmt='%Y-%m-%d %H:%M:%S')
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime) %message(s)', 
+                            datefmt='%Y-%m-%d %H:%M:%S')
 
     for i in range(NUMTHREADS):
         worker = Thread(target=getmalware, args=(malq,))
         worker.setDaemon(True)
         worker.start()
     
-    # sources:
     getxmllist('http://www.malwaredomainlist.com/hostslist/mdl.xml')
     getxmllist('http://malc0de.com/rss')
     
-    # wrap these in a function
+    # TODO: wrap these in a function
     for url in geturl('http://vxvault.siri-urz.net/URL_List.php'):
         if re.match('http', url):
             pushmalwareurl(url,malq)
     
-    sacour=geturl('http://www.sacour.cn/showmal.asp?month=%d&year=%d' % (now.month, now.year)).read()
+    sacour=geturl('http://www.sacour.cn/showmal.asp?month=%d&year=%d' % 
+                  (now.month, now.year)).read()
     for url in re.sub('\<[^>]*\>','\n',sacourtext).splitlines():
         pushmalwareurl(url,malq)
     
