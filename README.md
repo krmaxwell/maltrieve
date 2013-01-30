@@ -29,6 +29,10 @@ Other improvements include:
 * Multiple user agent support
 * Better error handling
 
+Dependencies
+------------
+* [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/) version 4
+
 How you can help
 ----------------
 
