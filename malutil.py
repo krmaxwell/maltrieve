@@ -1,6 +1,6 @@
 import urllib2, logging
 
-def geturl(url):
+def get_URL(url):
     try:
         response = urllib2.urlopen(req)
         return response
@@ -15,16 +15,16 @@ def geturl(url):
 def parse(url):
     logging.info('Getting URL %s', url)
     try:
-        response = geturl(urllib2.urlopen(request))
+        response = get_URL(urllib2.urlopen(request))
         soup = BeautifulSoup(response)
     except:
         logging.error('Error parsing %s',url)
         return
     return soup
 
-def getxml(url):
+def get_XML(url):
     try:
-        request = geturl(url)
+        request = get_URL(url)
     except Exception as e:
         logging.error('Could not open URL %s (%s)', url, e)
         return
