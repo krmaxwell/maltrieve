@@ -35,11 +35,11 @@ hashes = set()
 pasturls = set()
 dumpdir = ''
 
-def getmalware(q):
+def get_malware(q):
     while True:
         url = q.get()
         logging.info("Fetched URL %s from queue", url)
-        mal = geturl(url)
+        mal = get_URL(url)
         md5 = hashlib.md5(mal).hexdigest()
         # Is this a race condition?
         if md5 not in hashes:
@@ -51,10 +51,10 @@ def getmalware(q):
             pasturls.add(url)
         q.task_done()
 
-def getxmllist(url,q):
+def get_XML_list(url,q):
     malwareurls = []
 
-    tree = getxml(url)
+    tree = get_XML(url)
     descriptions = tree.findall('channel/item/description')
     for d in descriptions:
         logging.info('Parsing description %s', d)
@@ -67,9 +67,9 @@ def getxmllist(url,q):
         malwareurls.append(url)
 
     for url in malwareurls:
-        pushmalurl(url,q)
+        push_mal_URL(url,q)
 
-def pushmalurl(url,q):
+def push_malware_URL(url,q):
     if url not in pasturls:
         q.put(url)
 
@@ -132,22 +132,22 @@ if __name__ == "__main__":
                             datefmt='%Y-%m-%d %H:%M:%S')
 
     for i in range(NUMTHREADS):
-        worker = Thread(target=getmalware, args=(malq,))
+        worker = Thread(target=get_malware, args=(malq,))
         worker.setDaemon(True)
         worker.start()
     
-    getxmllist('http://www.malwaredomainlist.com/hostslist/mdl.xml')
-    getxmllist('http://malc0de.com/rss')
+    get_XML_list('http://www.malwaredomainlist.com/hostslist/mdl.xml')
+    get_XML_list('http://malc0de.com/rss')
     
     # TODO: wrap these in a function
-    for url in geturl('http://vxvault.siri-urz.net/URL_List.php'):
+    for url in get_URL('http://vxvault.siri-urz.net/URL_List.php'):
         if re.match('http', url):
-            pushmalwareurl(url,malq)
+            push_malware_URL(url,malq)
     
-    sacour=geturl('http://www.sacour.cn/showmal.asp?month=%d&year=%d' % 
+    sacour=get_URL('http://www.sacour.cn/showmal.asp?month=%d&year=%d' % 
                   (now.month, now.year)).read()
     for url in re.sub('\<[^>]*\>','\n',sacourtext).splitlines():
-        pushmalwareurl(url,malq)
+        push_malware_URL(url,malq)
     
     # appears offline
     # minotaur(parse('http://minotauranalysis.com/malwarelist-urls.aspx'))
