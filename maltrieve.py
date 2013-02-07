@@ -23,6 +23,7 @@ import tempfile
 import re
 import hashlib
 import os
+import sys
 import datetime
 import xml.etree.ElementTree as ET
 from threading import Thread 
@@ -38,7 +39,6 @@ pasturls = set()
 dumpdir = ''
 now = datetime.datetime.now()
 
-
 def get_malware(q):
     while True:
         url = q.get()
@@ -53,6 +53,7 @@ def get_malware(q):
                 # store the file and log the data
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
                     f.write(malfile)
+                    logging.info("Stored %s in %s", md5, dumpdir)
                 hashes.add(md5)
                 pasturls.add(url)
         q.task_done()
@@ -66,27 +67,24 @@ def get_XML_list(url,q):
         descriptions = tree.findall('channel/item/description')
 
     for d in descriptions:
-        logging.info('Parsing description %s', d)
+        logging.info('Parsing description %s', d.text)
         url = d.text.split(' ')[1].rstrip(',')
         if url == '-':
             url = d.text.split(' ')[4].rstrip(',')
-        url = re.sub('&amp;','&',url).rstrip()
+        url = re.sub('&amp;','&',url)
         if not re.match('http',url):
             url = 'http://'+url
         malwareurls.append(url)
 
     for url in malwareurls:
-        push_mal_URL(url,q)
+        push_malware_URL(url,q)
 
 def push_malware_URL(url,q):
+    url = url.strip()
     if url not in pasturls:
         q.put(url)
 
-# ----
-# Main
-# ----
-
-if __name__ == "__main__":
+def main():
     malq = Queue()
 
     parser = argparse.ArgumentParser()
@@ -126,18 +124,18 @@ if __name__ == "__main__":
         except Exception as e:
             logging.error('Could not open %s for writing (%s), using default', 
                           dumpdir, e)
-            dumpdir = '/tmp/malware/unsorted'
+            dumpdir = '/tmp/malware'
         else:
             os.rmdir(d)
     else:
-        dumpdir = '/tmp/malware/unsorted'
+        dumpdir = '/tmp/malware'
 
     if args.logfile:
         logging.basicConfig(filename=args.logfile, level=logging.DEBUG, 
                             format='%(asctime)s %(thread)d %(message)s', 
                             datefmt='%Y-%m-%d %H:%M:%S')
     else:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime) %(message)s', 
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(thread)d %(message)s', 
                             datefmt='%Y-%m-%d %H:%M:%S')
 
     if os.path.exists('hashes.obj'):
@@ -178,3 +176,9 @@ if __name__ == "__main__":
 
     with open('urls.obj', 'wb') as urlfile:
         pickle.dump(urlfile, pasturls)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit()
