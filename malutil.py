@@ -29,7 +29,7 @@ def get_XML(url):
         logging.error('Could not open URL %s (%s)', url, e)
         return
 
-   try:
+    try:
        tree = ET.parse(req) 
     except Exception as e:
         logging.error('Could not parse XML at %s (%s)', url, e)
