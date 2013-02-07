@@ -44,15 +44,17 @@ def get_malware(q):
         url = q.get()
         logging.info("Fetched URL %s from queue", url)
         mal = get_URL(url)
-        md5 = hashlib.md5(mal).hexdigest()
-        # Is this a big race condition problem?
-        if md5 not in hashes:
-            logging.info("Found file %s at URL %s", md5, url)
-	    # store the file and log the data
-            with open(os.path.join(dumpdir, md5), 'wb') as f:
-                f.write(mal)
-            hashes.add(md5)
-            pasturls.add(url)
+        if mal:
+            malfile=mal.read()
+            md5 = hashlib.md5(malfile).hexdigest()
+            # Is this a big race condition problem?
+            if md5 not in hashes:
+                logging.info("Found file %s at URL %s", md5, url)
+                # store the file and log the data
+                with open(os.path.join(dumpdir, md5), 'wb') as f:
+                    f.write(malfile)
+                hashes.add(md5)
+                pasturls.add(url)
         q.task_done()
 
 def get_XML_list(url,q):
@@ -68,7 +70,7 @@ def get_XML_list(url,q):
         url = d.text.split(' ')[1].rstrip(',')
         if url == '-':
             url = d.text.split(' ')[4].rstrip(',')
-        url = re.sub('&amp;','&',url)
+        url = re.sub('&amp;','&',url).rstrip()
         if not re.match('http',url):
             url = 'http://'+url
         malwareurls.append(url)
@@ -159,7 +161,7 @@ if __name__ == "__main__":
         if re.match('http', url):
             push_malware_URL(url,malq)
     
-    sacour=get_URL('http://www.sacour.cn/showmal.asp?month=%d&year=%d' % 
+    sacourtext=get_URL('http://www.sacour.cn/showmal.asp?month=%d&year=%d' % 
                   (now.month, now.year)).read()
     for url in re.sub('\<[^>]*\>','\n',sacourtext).splitlines():
         push_malware_URL(url,malq)
