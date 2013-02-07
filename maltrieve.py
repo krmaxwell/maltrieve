@@ -132,7 +132,7 @@ if __name__ == "__main__":
                             format='%(asctime)s %(thread)d %(message)s', 
                             datefmt='%Y-%m-%d %H:%M:%S')
     else:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime) %message(s)', 
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime) %(message)s', 
                             datefmt='%Y-%m-%d %H:%M:%S')
 
     if os.path.exists('hashes.obj'):
