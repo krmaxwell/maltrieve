@@ -2,7 +2,7 @@ import urllib2, logging
 
 def get_URL(url):
     try:
-        response = urllib2.urlopen(req)
+        response = urllib2.urlopen(url)
         return response
     except urllib2.URLError, e:
         if hasattr(e,'reason'):

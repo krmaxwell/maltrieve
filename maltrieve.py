@@ -54,9 +54,12 @@ def get_malware(q):
 
 def get_XML_list(url,q):
     malwareurls = []
+    descriptions = []
 
     tree = get_XML(url)
-    descriptions = tree.findall('channel/item/description')
+    if tree:
+        descriptions = tree.findall('channel/item/description')
+
     for d in descriptions:
         logging.info('Parsing description %s', d)
         url = d.text.split(' ')[1].rstrip(',')
