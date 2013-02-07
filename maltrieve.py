@@ -23,6 +23,7 @@ import tempfile
 import re
 import hashlib
 import os
+import datetime
 import xml.etree.ElementTree as ET
 from threading import Thread 
 from Queue import Queue
@@ -35,6 +36,8 @@ NUMTHREADS = 4
 hashes = set()
 pasturls = set()
 dumpdir = ''
+now = datetime.datetime.now()
+
 
 def get_malware(q):
     while True:
