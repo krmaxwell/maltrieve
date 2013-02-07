@@ -33,6 +33,15 @@ Dependencies
 ------------
 * [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/) version 4
 
+License
+-------
+Released under GPL version 3. See the LICENSE file for full details.
+
+Known bugs
+----------
+
+We list all the bugs we know about (plus some things we know we need to add) at the [Github issues](https://github.com/technoskald/maltrieve/issues) page.
+
 How you can help
 ----------------
 
