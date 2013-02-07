@@ -1,4 +1,6 @@
-import urllib2, logging
+import urllib2
+import logging
+import xml.etree.ElementTree as ET
 
 def get_URL(url):
     try:
@@ -30,7 +32,7 @@ def get_XML(url):
         return
 
     try:
-       tree = ET.parse(req) 
+       tree = ET.parse(request) 
     except Exception as e:
         logging.error('Could not parse XML at %s (%s)', url, e)
         return
