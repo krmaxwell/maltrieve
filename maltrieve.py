@@ -145,8 +145,8 @@ if __name__ == "__main__":
         worker.setDaemon(True)
         worker.start()
     
-    get_XML_list('http://www.malwaredomainlist.com/hostslist/mdl.xml')
-    get_XML_list('http://malc0de.com/rss')
+    get_XML_list('http://www.malwaredomainlist.com/hostslist/mdl.xml',malq)
+    get_XML_list('http://malc0de.com/rss',malq)
     
     # TODO: wrap these in a function
     for url in get_URL('http://vxvault.siri-urz.net/URL_List.php'):
