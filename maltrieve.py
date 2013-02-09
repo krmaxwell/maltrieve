@@ -33,7 +33,7 @@ from bs4 import BeautifulSoup
 
 from malutil import *
 
-NUMTHREADS = 1
+NUMTHREADS = 4
 hashes = set()
 pasturls = set()
 now = datetime.datetime.now()
