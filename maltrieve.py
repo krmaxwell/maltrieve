@@ -97,6 +97,14 @@ def main():
                         help="Define file for logging progress")
     args = parser.parse_args()
 
+    if args.logfile:
+        logging.basicConfig(filename=args.logfile, level=logging.DEBUG, 
+                            format='%(asctime)s %(thread)d %(message)s', 
+                            datefmt='%Y-%m-%d %H:%M:%S')
+    else:
+        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(thread)d %(message)s', 
+                            datefmt='%Y-%m-%d %H:%M:%S')
+
     # Enable thug support 
     # https://github.com/buffer/thug
     # TODO: rewrite and test
@@ -129,14 +137,6 @@ def main():
             os.rmdir(d)
     else:
         dumpdir = '/tmp/malware'
-
-    if args.logfile:
-        logging.basicConfig(filename=args.logfile, level=logging.DEBUG, 
-                            format='%(asctime)s %(thread)d %(message)s', 
-                            datefmt='%Y-%m-%d %H:%M:%S')
-    else:
-        logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(thread)d %(message)s', 
-                            datefmt='%Y-%m-%d %H:%M:%S')
 
     if os.path.exists('hashes.obj'):
         with open('hashes.obj','rb') as hashfile:
