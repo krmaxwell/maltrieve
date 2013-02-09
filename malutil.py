@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 
 def get_URL(url):
     try:
-        response = urllib2.urlopen(url)
+        response = urllib2.urlopen(url.encode("utf8"))
         return response
     except urllib2.URLError, e:
         if hasattr(e,'reason'):
@@ -17,7 +17,7 @@ def get_URL(url):
 def parse(url):
     logging.info('Getting URL %s', url)
     try:
-        response = get_URL(urllib2.urlopen(request))
+        response = get_URL(url)
         soup = BeautifulSoup(response)
     except:
         logging.error('Error parsing %s',url)
