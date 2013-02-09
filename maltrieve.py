@@ -33,13 +33,12 @@ from bs4 import BeautifulSoup
 
 from malutil import *
 
-NUMTHREADS = 4
+NUMTHREADS = 1
 hashes = set()
 pasturls = set()
-dumpdir = ''
 now = datetime.datetime.now()
 
-def get_malware(q):
+def get_malware(q,dumpdir):
     while True:
         url = q.get()
         logging.info("Fetched URL %s from queue", url)
@@ -50,6 +49,7 @@ def get_malware(q):
             # Is this a big race condition problem?
             if md5 not in hashes:
                 logging.info("Found file %s at URL %s", md5, url)
+                logging.debug("Going to put file in directory %s", dumpdir)
                 # store the file and log the data
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
                     f.write(malfile)
@@ -138,6 +138,8 @@ def main():
     else:
         dumpdir = '/tmp/malware'
 
+    logging.info('Using %s as dump directory', dumpdir)
+
     if os.path.exists('hashes.obj'):
         with open('hashes.obj','rb') as hashfile:
             hashes = pickle.load(hashfile)
@@ -147,7 +149,7 @@ def main():
             pasturls = pickle.load(urlfile)
 
     for i in range(NUMTHREADS):
-        worker = Thread(target=get_malware, args=(malq,))
+        worker = Thread(target=get_malware, args=(malq,dumpdir,))
         worker.setDaemon(True)
         worker.start()
     
