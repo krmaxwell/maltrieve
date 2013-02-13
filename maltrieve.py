@@ -115,7 +115,7 @@ def main():
     parser.add_argument("-l", "--logfile", 
                         help="Define file for logging progress")
     parser.add_argument("-c", "--cuckoo",
-			help="Enable cuckoo analysis") 
+			help="Enable cuckoo analysis", action="store_true") 
     global args 
     args = parser.parse_args()
 
