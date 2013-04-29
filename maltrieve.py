@@ -26,6 +26,12 @@ import os
 import sys
 import datetime
 import xml.etree.ElementTree as ET
+import itertools
+import mimetools
+import mimetypes
+import urllib
+import json
+from MultiPartForm import *
 from threading import Thread 
 from Queue import Queue
 
@@ -56,6 +62,19 @@ def get_malware(q,dumpdir):
                     logging.info("Stored %s in %s", md5, dumpdir)
                 hashes.add(md5)
                 pasturls.add(url)
+		if args.cuckoo:
+		    f = open(os.path.join(dumpdir, md5), 'rb')
+		    form = MultiPartForm()
+		    form.add_file('file', md5, fileHandle=f)
+		    request = urllib2.Request('http://localhost:8090/tasks/create/file')
+		    request.add_header('User-agent', 'Maltrieve')
+		    body = str(form)
+		    request.add_header('Content-type', form.get_content_type())
+		    request.add_header('Content-length', len(body))
+		    request.add_data(body)
+		    response = urllib2.urlopen(request).read()
+		    responsedata = json.loads(response)
+		    logging.info("Submitted %s to cuckoo, task ID %s", md5, responsedata["task_id"])
         q.task_done()
 
 def get_XML_list(url,q):
@@ -95,6 +114,9 @@ def main():
                         help="Define dump directory for retrieved files")
     parser.add_argument("-l", "--logfile", 
                         help="Define file for logging progress")
+    parser.add_argument("-c", "--cuckoo",
+			help="Enable cuckoo analysis", action="store_true") 
+    global args 
     args = parser.parse_args()
 
     if args.logfile:
