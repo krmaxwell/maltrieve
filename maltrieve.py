@@ -31,6 +31,8 @@ import mimetools
 import mimetypes
 import urllib
 import json
+import pickle
+import string
 from MultiPartForm import *
 from threading import Thread 
 from Queue import Queue
@@ -39,15 +41,11 @@ from bs4 import BeautifulSoup
 
 from malutil import *
 
-NUMTHREADS = 4
-hashes = set()
-pasturls = set()
-now = datetime.datetime.now()
-
 def get_malware(q,dumpdir):
     while True:
         url = q.get()
         logging.info("Fetched URL %s from queue", url)
+        logging.info("%s items remaining in queue", q.qsize())
         mal = get_URL(url)
         if mal:
             malfile=mal.read()
@@ -60,21 +58,43 @@ def get_malware(q,dumpdir):
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
                     f.write(malfile)
                     logging.info("Stored %s in %s", md5, dumpdir)
+                if args.vxcage:
+					if os.path.exists(os.path.join(dumpdir, md5)):
+						f = open(os.path.join(dumpdir, md5), 'rb')
+						form = MultiPartForm()
+						form.add_file('file', md5, fileHandle=f)
+						form.add_field('tags', 'maltrieve')
+						request = urllib2.Request('http://localhost:8080/malware/add')
+						request.add_header('User-agent', 'Maltrieve')
+						body = str(form)
+						request.add_header('Content-type', form.get_content_type())
+						request.add_header('Content-length', len(body))
+						request.add_data(body)
+						try:
+							response = urllib2.urlopen(request).read()
+						except:
+							logging.info("Exception caught from VxCage")
+						responsedata = json.loads(response)
+						logging.info("Submitted %s to VxCage, response was %s", md5, responsedata["message"])
+						logging.info("Deleting file as it has been uploaded to VxCage")
+						try:
+							os.remove(os.path.join(dumpdir, md5))
+						except:
+							logging.info("Exception when attempting to delete file: %s", os.path.join(dumpdir, md5))
+                if args.cuckoo:
+                    f = open(os.path.join(dumpdir, md5), 'rb')
+                    form = MultiPartForm()
+                    form.add_file('file', md5, fileHandle=f)
+                    request = urllib2.Request('http://localhost:8090/tasks/create/file')
+                    request.add_header('User-agent', 'Maltrieve')
+                    body = str(form)
+                    request.add_header('Content-type', form.get_content_type())
+                    request.add_header('Content-length', len(body))
+                    request.add_data(body)
+                    response = urllib2.urlopen(request).read()
+                    responsedata = json.loads(response)
+                    logging.info("Submitted %s to cuckoo, task ID %s", md5, responsedata["task_id"])
                 hashes.add(md5)
-                pasturls.add(url)
-		if args.cuckoo:
-		    f = open(os.path.join(dumpdir, md5), 'rb')
-		    form = MultiPartForm()
-		    form.add_file('file', md5, fileHandle=f)
-		    request = urllib2.Request('http://localhost:8090/tasks/create/file')
-		    request.add_header('User-agent', 'Maltrieve')
-		    body = str(form)
-		    request.add_header('Content-type', form.get_content_type())
-		    request.add_header('Content-length', len(body))
-		    request.add_data(body)
-		    response = urllib2.urlopen(request).read()
-		    responsedata = json.loads(response)
-		    logging.info("Submitted %s to cuckoo, task ID %s", md5, responsedata["task_id"])
         q.task_done()
 
 def get_XML_list(url,q):
@@ -101,21 +121,35 @@ def get_XML_list(url,q):
 def push_malware_URL(url,q):
     url = url.strip()
     if url not in pasturls:
+        logging.info('Adding new URL to queue: %s', url)
+        pasturls.add(url)
         q.put(url)
+    else:
+		logging.info('Skipping previously processed URL: %s', url)
+        
 
 def main():
+    global hashes
+    hashes = set()
+    global pasturls
+    pasturls = set()
+
     malq = Queue()
+    NUMTHREADS = 5
+    now = datetime.datetime.now()
 
     parser = argparse.ArgumentParser()
-#   parser.add_argument("-t", "--thug", help="Enable thug analysis", action="store_true")
     parser.add_argument("-p", "--proxy", 
                         help="Define HTTP proxy as address:port")
     parser.add_argument("-d", "--dumpdir", 
                         help="Define dump directory for retrieved files")
     parser.add_argument("-l", "--logfile", 
                         help="Define file for logging progress")
+    parser.add_argument("-x", "--vxcage", 
+                        help="Dump the file to a VxCage instance running on the localhost", action="store_true")
     parser.add_argument("-c", "--cuckoo",
 			help="Enable cuckoo analysis", action="store_true") 
+
     global args 
     args = parser.parse_args()
 
@@ -195,11 +229,16 @@ def main():
     
     malq.join()
 
-    with open('hashes.obj','wb') as hashfile:
-        pickle.dump(hashfile, hashes)
+  
 
-    with open('urls.obj', 'wb') as urlfile:
-        pickle.dump(urlfile, pasturls)
+    if pasturls:
+		logging.info('Dumping past URLs to file')
+		with open('urls.obj', 'w') as urlfile:
+			pickle.dump(pasturls, urlfile)
+
+    if hashes:
+		with open('hashes.obj','w') as hashfile:
+			pickle.dump(hashes, hashfile)
 
 if __name__ == "__main__":
     try:
