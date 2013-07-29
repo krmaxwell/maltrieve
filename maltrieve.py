@@ -54,6 +54,15 @@ def get_malware(q,dumpdir):
             if md5 not in hashes:
                 logging.info("Found file %s at URL %s", md5, url)
                 logging.debug("Going to put file in directory %s", dumpdir)
+                # see http://stackoverflow.com/a/5032238
+                # may resolve issue #21
+                if not os.path.isdir(dumpdir):
+                    try:
+                        logging.info("Creating dumpdir %s", dumpdir)
+                        os.makedirs(dumpdir)
+                    except OSError as exception:
+                        if exception.errno != errno.EEXIST:
+                            raise
                 # store the file and log the data
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
                     f.write(malfile)
@@ -228,8 +237,6 @@ def main():
     # malwarebl(parse('http://www.malwareblacklist.com/mbl.xml'))
     
     malq.join()
-
-  
 
     if pasturls:
         logging.info('Dumping past URLs to file')
