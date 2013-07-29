@@ -59,28 +59,28 @@ def get_malware(q,dumpdir):
                     f.write(malfile)
                     logging.info("Stored %s in %s", md5, dumpdir)
                 if args.vxcage:
-					if os.path.exists(os.path.join(dumpdir, md5)):
-						f = open(os.path.join(dumpdir, md5), 'rb')
-						form = MultiPartForm()
-						form.add_file('file', md5, fileHandle=f)
-						form.add_field('tags', 'maltrieve')
-						request = urllib2.Request('http://localhost:8080/malware/add')
-						request.add_header('User-agent', 'Maltrieve')
-						body = str(form)
-						request.add_header('Content-type', form.get_content_type())
-						request.add_header('Content-length', len(body))
-						request.add_data(body)
-						try:
-							response = urllib2.urlopen(request).read()
-						except:
-							logging.info("Exception caught from VxCage")
-						responsedata = json.loads(response)
-						logging.info("Submitted %s to VxCage, response was %s", md5, responsedata["message"])
-						logging.info("Deleting file as it has been uploaded to VxCage")
-						try:
-							os.remove(os.path.join(dumpdir, md5))
-						except:
-							logging.info("Exception when attempting to delete file: %s", os.path.join(dumpdir, md5))
+                    if os.path.exists(os.path.join(dumpdir, md5)):
+                        f = open(os.path.join(dumpdir, md5), 'rb')
+                        form = MultiPartForm()
+                        form.add_file('file', md5, fileHandle=f)
+                        form.add_field('tags', 'maltrieve')
+                        request = urllib2.Request('http://localhost:8080/malware/add')
+                        request.add_header('User-agent', 'Maltrieve')
+                        body = str(form)
+                        request.add_header('Content-type', form.get_content_type())
+                        request.add_header('Content-length', len(body))
+                        request.add_data(body)
+                        try:
+                            response = urllib2.urlopen(request).read()
+                        except:
+                            logging.info("Exception caught from VxCage")
+                        responsedata = json.loads(response)
+                        logging.info("Submitted %s to VxCage, response was %s", md5, responsedata["message"])
+                        logging.info("Deleting file as it has been uploaded to VxCage")
+                        try:
+                            os.remove(os.path.join(dumpdir, md5))
+                        except:
+                            logging.info("Exception when attempting to delete file: %s", os.path.join(dumpdir, md5))
                 if args.cuckoo:
                     f = open(os.path.join(dumpdir, md5), 'rb')
                     form = MultiPartForm()
@@ -125,7 +125,7 @@ def push_malware_URL(url,q):
         pasturls.add(url)
         q.put(url)
     else:
-		logging.info('Skipping previously processed URL: %s', url)
+        logging.info('Skipping previously processed URL: %s', url)
         
 
 def main():
@@ -148,7 +148,7 @@ def main():
     parser.add_argument("-x", "--vxcage", 
                         help="Dump the file to a VxCage instance running on the localhost", action="store_true")
     parser.add_argument("-c", "--cuckoo",
-			help="Enable cuckoo analysis", action="store_true") 
+            help="Enable cuckoo analysis", action="store_true") 
 
     global args 
     args = parser.parse_args()
@@ -232,13 +232,13 @@ def main():
   
 
     if pasturls:
-		logging.info('Dumping past URLs to file')
-		with open('urls.obj', 'w') as urlfile:
-			pickle.dump(pasturls, urlfile)
+        logging.info('Dumping past URLs to file')
+        with open('urls.obj', 'w') as urlfile:
+            pickle.dump(pasturls, urlfile)
 
     if hashes:
-		with open('hashes.obj','w') as hashfile:
-			pickle.dump(hashes, hashfile)
+        with open('hashes.obj','w') as hashfile:
+            pickle.dump(hashes, hashfile)
 
 if __name__ == "__main__":
     try:
