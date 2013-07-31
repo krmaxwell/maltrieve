@@ -249,8 +249,8 @@ def main():
 
     cleanmxtext=get_URL('http://support.clean-mx.de/clean-mx/xmlviruses.php?')
     cleanmxxml=etree.parse(cleanmxtext)
-    for url in cleanmxxml.xpath("//url"):
-        url = re.sub('&amp;','&',url)
+    for line in cleanmxxml.xpath("//url"):
+        url = re.sub('&amp;','&',line.text)
         push_malware_URL(url,q)
 
     malq.join()
