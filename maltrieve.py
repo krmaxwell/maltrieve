@@ -251,7 +251,7 @@ def main():
     cleanmxxml=etree.parse(cleanmxtext)
     for line in cleanmxxml.xpath("//url"):
         url = re.sub('&amp;','&',line.text)
-        push_malware_URL(url,q)
+        push_malware_URL(url,malq)
 
     malq.join()
 
