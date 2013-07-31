@@ -230,10 +230,11 @@ def main():
     
     sacourtext=get_URL('http://www.sacour.cn/list/%d-%d/%d%d%d.htm' %
                   (now.year, now.month, now.year, now.month, now.day))
-    sacoursoup=BeautifulSoup(sacourtext)
-    for url in sacoursoup.stripped_strings:
-        if re.match("^http",url):
-            push_malware_URL(url,malq)
+    if sacourtext:
+        sacoursoup=BeautifulSoup(sacourtext)
+        for url in sacoursoup.stripped_strings:
+            if re.match("^http",url):
+                push_malware_URL(url,malq)
 
     urlquerytext=get_URL('http://urlquery.net/')
     urlquerysoup=BeautifulSoup(urlquerytext)
