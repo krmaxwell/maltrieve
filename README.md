@@ -6,13 +6,13 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 * [Malc0de](http://malc0de.com/rss)
 * [Malware Black List](http://www.malwareblacklist.com/mbl.xml)
 * [Malware Domain List](http://www.malwaredomainlist.com/hostslist/mdl.xml)
+* [Malware Patrol](http://www.malware.com.br/cgi/submit?action=list)
 * [Sacour.cn](http://www.sacour.cn)
 * [VX Vault](http://vxvault.siri-urz.net/URL_List.php)
+* [URLqery](http://urlquery.net/)
 
 Pending sources include:
 
-* http://urlquery.net/
-* http://www.malware.com.br/cgi/submit?action=list
 * http://support.clean-mx.de/clean-mx/xmlviruses.php?
 * http://www.nictasoft.com/ace/malware-urls/
 

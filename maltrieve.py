@@ -238,6 +238,11 @@ def main():
         for a in t.find_all("a"):
              push_malware_URL(a['title'],malq)
     
+    mcbrtext=get_URL('http://www.malware.com.br/cgi/submit?action=list')
+    for url in mcbrtext.splitlines():
+        if re.match('^http', url):
+            push_malware_URL(url,malq)
+
     malq.join()
 
     if pasturls:
