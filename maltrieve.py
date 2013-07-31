@@ -228,10 +228,12 @@ def main():
         if re.match('http', url):
             push_malware_URL(url,malq)
     
-    sacourtext=get_URL('http://www.sacour.cn/showmal.asp?month=%d&year=%d' % 
-                  (now.month, now.year))
-    for url in re.sub('\<[^>]*\>','\n',sacourtext).splitlines():
-        push_malware_URL(url,malq)
+    sacourtext=get_URL('http://www.sacour.cn/list/%d-%d/%d%d%d.htm' %
+                  (now.year, now.month, now.year, now.month, now.day))
+    sacoursoup=BeautifulSoup(sacourtext)
+    for url in sacoursoup.stripped_strings:
+        if re.match("^http",url):
+            push_malware_URL(url,malq)
 
     urlquerytext=get_URL('http://urlquery.net/')
     urlquerysoup=BeautifulSoup(urlquerytext)
