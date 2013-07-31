@@ -231,6 +231,12 @@ def main():
                   (now.month, now.year)).read()
     for url in re.sub('\<[^>]*\>','\n',sacourtext).splitlines():
         push_malware_URL(url,malq)
+
+    urlquerytext=get_URL('http://urlquery.net/')
+    urlquerysoup=BeautifulSoup(urlquerytext)
+    for t in soup.find_all("table", class_="test"):
+        for a in t.find_all("a"):
+             push_malware_URL(a['title'],malq)
     
     malq.join()
 
