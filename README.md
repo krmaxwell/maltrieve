@@ -28,6 +28,7 @@ Other improvements include:
 * Logging of source URLs
 * Multiple user agent support
 * Better error handling
+* VxCage and Cuckoo Sandbox support
 
 Dependencies
 ------------
