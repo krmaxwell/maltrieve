@@ -220,6 +220,7 @@ def main():
     
     get_XML_list('http://www.malwaredomainlist.com/hostslist/mdl.xml',malq)
     get_XML_list('http://malc0de.com/rss',malq)
+    get_XML_list('http://www.malwareblacklist.com/mbl.xml',malq)
     
     # TODO: wrap these in a function
     for url in get_URL('http://vxvault.siri-urz.net/URL_List.php'):
@@ -230,11 +231,6 @@ def main():
                   (now.month, now.year)).read()
     for url in re.sub('\<[^>]*\>','\n',sacourtext).splitlines():
         push_malware_URL(url,malq)
-    
-    # appears offline
-    # minotaur(parse('http://minotauranalysis.com/malwarelist-urls.aspx'))
-    # appears offline
-    # malwarebl(parse('http://www.malwareblacklist.com/mbl.xml'))
     
     malq.join()
 
