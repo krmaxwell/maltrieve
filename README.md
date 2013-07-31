@@ -10,10 +10,7 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 * [Sacour.cn](http://www.sacour.cn)
 * [VX Vault](http://vxvault.siri-urz.net/URL_List.php)
 * [URLqery](http://urlquery.net/)
-
-Pending sources include:
-
-* http://support.clean-mx.de/clean-mx/xmlviruses.php?
+* [CleanMX](http://support.clean-mx.de/clean-mx/xmlviruses.php?)
 
 These lists will be implemented if/when they return to activity.
 

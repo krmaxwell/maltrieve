@@ -36,6 +36,7 @@ import string
 from MultiPartForm import *
 from threading import Thread 
 from Queue import Queue
+from lxml import etree
 
 from bs4 import BeautifulSoup
 
@@ -222,7 +223,7 @@ def main():
     get_XML_list('http://malc0de.com/rss',malq)
     get_XML_list('http://www.malwareblacklist.com/mbl.xml',malq)
     
-    # TODO: wrap these in a function
+    # TODO: wrap these in functions?
     for url in get_URL('http://vxvault.siri-urz.net/URL_List.php'):
         if re.match('http', url):
             push_malware_URL(url,malq)
@@ -242,6 +243,12 @@ def main():
     for url in mcbrtext.splitlines():
         if re.match('^http', url):
             push_malware_URL(url,malq)
+
+    cleanmxtext=get_URL('http://support.clean-mx.de/clean-mx/xmlviruses.php?')
+    cleanmxxml=etree.parse(cleanmxtext)
+    for url in cleanmxxml.xpath("//url"):
+        url = re.sub('&amp;','&',url)
+        push_malware_URL(url,q)
 
     malq.join()
 
