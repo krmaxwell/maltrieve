@@ -14,7 +14,6 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 Pending sources include:
 
 * http://support.clean-mx.de/clean-mx/xmlviruses.php?
-* http://www.nictasoft.com/ace/malware-urls/
 
 These lists will be implemented if/when they return to activity.
 
