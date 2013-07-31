@@ -29,6 +29,7 @@ Other improvements include:
 Dependencies
 ------------
 * [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/) version 4
+* [lxml](http://lxml.de)
 
 License
 -------
