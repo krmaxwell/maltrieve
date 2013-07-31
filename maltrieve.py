@@ -238,7 +238,7 @@ def main():
 
     urlquerytext=get_URL('http://urlquery.net/')
     urlquerysoup=BeautifulSoup(urlquerytext)
-    for t in soup.find_all("table", class_="test"):
+    for t in urlquerysoup.find_all("table", class_="test"):
         for a in t.find_all("a"):
              push_malware_URL(a['title'],malq)
     
