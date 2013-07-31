@@ -229,7 +229,7 @@ def main():
             push_malware_URL(url,malq)
     
     sacourtext=get_URL('http://www.sacour.cn/showmal.asp?month=%d&year=%d' % 
-                  (now.month, now.year)).read()
+                  (now.month, now.year))
     for url in re.sub('\<[^>]*\>','\n',sacourtext).splitlines():
         push_malware_URL(url,malq)
 
