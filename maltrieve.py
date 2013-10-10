@@ -242,11 +242,6 @@ def main():
         for a in t.find_all("a"):
              push_malware_URL(a['title'],malq)
     
-    mcbrtext=get_URL('http://www.malware.com.br/cgi/submit?action=list')
-    for url in mcbrtext.read().splitlines():
-        if re.match('^http', url):
-            push_malware_URL(url,malq)
-
     cleanmxtext=get_URL('http://support.clean-mx.de/clean-mx/xmlviruses.php?')
     cleanmxxml=etree.parse(cleanmxtext)
     for line in cleanmxxml.xpath("//url"):
