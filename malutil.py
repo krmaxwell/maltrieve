@@ -7,7 +7,7 @@ def get_URL(url):
     try:
         response = urllib2.urlopen(url.encode("utf8"))
         return response
-    except urllib2.URLError, e:
+    except (ValueError, urllib2.URLError) as e:
         if hasattr(e, 'reason'):
             logging.warning('urlopen() returned error %s\n', e.reason)
         elif hasattr(e, 'code'):
@@ -15,6 +15,7 @@ def get_URL(url):
         else:
             logging.warning('Opened %s with response code %s', url,
                             response.getcode())
+        return False
 
 
 def parse(url):

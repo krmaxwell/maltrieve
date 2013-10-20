@@ -246,16 +246,18 @@ def main():
                 push_malware_URL(url, malq)
 
     urlquerytext = get_URL('http://urlquery.net/')
-    urlquerysoup = BeautifulSoup(urlquerytext)
-    for t in urlquerysoup.find_all("table", class_="test"):
-        for a in t.find_all("a"):
-            push_malware_URL(a['title'], malq)
+    if urlquerytext:
+        urlquerysoup = BeautifulSoup(urlquerytext)
+        for t in urlquerysoup.find_all("table", class_="test"):
+            for a in t.find_all("a"):
+                push_malware_URL(a['title'], malq)
 
     cleanmxtext = get_URL('http://support.clean-mx.de/clean-mx/xmlviruses.php?')
-    cleanmxxml = etree.parse(cleanmxtext)
-    for line in cleanmxxml.xpath("//url"):
-        url = re.sub('&amp;', '&', line.text)
-        push_malware_URL(url, malq)
+    if cleanmxtext:
+        cleanmxxml = etree.parse(cleanmxtext)
+        for line in cleanmxxml.xpath("//url"):
+            url = re.sub('&amp;', '&', line.text)
+            push_malware_URL(url, malq)
 
     malq.join()
 
