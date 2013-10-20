@@ -33,6 +33,8 @@ import urllib
 import json
 import pickle
 import string
+import ConfigParser
+
 from MultiPartForm import *
 from threading import Thread
 from Queue import Queue
@@ -56,8 +58,6 @@ def get_malware(q, dumpdir):
             if md5 not in hashes:
                 logging.info("Found file %s at URL %s", md5, url)
                 logging.debug("Going to put file in directory %s", dumpdir)
-                # see http://stackoverflow.com/a/5032238
-                # may resolve issue #21
                 if not os.path.isdir(dumpdir):
                     try:
                         logging.info("Creating dumpdir %s", dumpdir)
@@ -69,7 +69,7 @@ def get_malware(q, dumpdir):
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
                     f.write(malfile)
                     logging.info("Stored %s in %s", md5, dumpdir)
-                if args.vxcage:
+                if cfg['vxcage']:
                     if os.path.exists(os.path.join(dumpdir, md5)):
                         f = open(os.path.join(dumpdir, md5), 'rb')
                         form = MultiPartForm()
@@ -95,7 +95,7 @@ def get_malware(q, dumpdir):
                         except:
                             logging.info("Exception when attempting to delete file: %s",
                                          os.path.join(dumpdir, md5))
-                if args.cuckoo:
+                if cfg['cuckoo']:
                     f = open(os.path.join(dumpdir, md5), 'rb')
                     form = MultiPartForm()
                     form.add_file('file', md5, fileHandle=f)
@@ -168,11 +168,20 @@ def main():
     parser.add_argument("-c", "--cuckoo",
                         help="Enable cuckoo analysis", action="store_true")
 
+    global cfg
+    cfg = dict()
     global args
     args = parser.parse_args()
 
-    if args.logfile:
-        logging.basicConfig(filename=args.logfile, level=logging.DEBUG,
+    global config = ConfigParser.ConfigParser()
+    config.read('maltrieve.cfg')
+
+    if args.logfile or config.get('Maltrieve', 'logfile'):
+        if args.logfile:
+            cfg['logfile'] = args.logfile
+        else:
+            cfg['logfile'] = config.get('Maltrieve', 'logfile')
+        logging.basicConfig(filename=cfg['logfile'], level=logging.DEBUG,
                             format='%(asctime)s %(thread)d %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S')
     else:
@@ -180,40 +189,38 @@ def main():
                             format='%(asctime)s %(thread)d %(message)s',
                             datefmt='%Y-%m-%d %H:%M:%S')
 
-    # Enable thug support
-    # https://github.com/buffer/thug
-    # TODO: rewrite and test
-    '''
-    try:
-        if args.thug:
-            loadthug()
-    except Exception as e:
-        logging.warning('Could not enable thug (%s)', e)
-    '''
-
     if args.proxy:
-        proxy = urllib2.ProxyHandler({'http': args.proxy})
-        opener = urllib2.build_opener(proxy)
+        cfg['proxy'] = urllib2.ProxyHandler({'http': args.proxy})
+    elif config.get('Maltrieve', 'proxy'):
+        cfg['proxy'] = urllib2.ProxyHandler({'http': config.get('Maltrieve',
+                                                                'proxy')
+
+    if cfg['proxy']
+        opener = urllib2.build_opener(cfg['proxy'])
         urllib2.install_opener(opener)
-        logging.info('Using proxy %s', args.proxy)
-        my_ip = urllib2.urlopen('http://whatthehellismyip.com/?ipraw').read()
-        logging.info('External sites see %s', my_ip)
+        logging.info('Using proxy %s', cfg['proxy'])
+
+    my_ip = urllib2.urlopen('http://whatthehellismyip.com/?ipraw').read()
+    logging.info('External sites see %s', my_ip)
 
     # make sure we can open the directory for writing
     if args.dumpdir:
-        try:
-            d = tempfile.mkdtemp(dir=args.dumpdir)
-            dumpdir = args.dumpdir
-        except Exception as e:
-            logging.error('Could not open %s for writing (%s), using default',
-                          dumpdir, e)
-            dumpdir = '/tmp/malware'
-        else:
-            os.rmdir(d)
+        cfg['dumpdir'] = args.dumpdir
+    elif config.get('Maltrieve', 'dumpdir'):
+        cfg['dumpdir'] = config.get('Maltrieve', 'dumpdir')
     else:
-        dumpdir = '/tmp/malware'
+        cfg['dumpdir'] = '/tmp/malware'
 
-    logging.info('Using %s as dump directory', dumpdir)
+    try:
+        d = tempfile.mkdtemp(dir=cfg['dumpdir'])
+    except Exception as e:
+        logging.error('Could not open %s for writing (%s), using default',
+                      cfg['dumpdir'], e)
+        cfg['dumpdir'] = '/tmp/malware'
+    else:
+        os.rmdir(d)
+
+    logging.info('Using %s as dump directory', cfg['dumpdir'])
 
     if os.path.exists('hashes.obj'):
         with open('hashes.obj', 'rb') as hashfile:
@@ -264,6 +271,9 @@ def main():
         for url in joxeantext:
             if not re.match("^#", url):
                 push_malware_URL(url, malq)
+
+    cfg['vxcage'] = args.vxcage or config.get('Maltrieve', 'vxcage')
+    cfg['cuckoo'] = args.cuckoo or config.get('Maltrieve', 'cuckoo')
 
     malq.join()
 
