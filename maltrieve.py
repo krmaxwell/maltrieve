@@ -52,6 +52,9 @@ def get_malware(q, dumpdir):
         logging.info("%s items remaining in queue", q.qsize())
         mal = get_URL(url)
         if mal:
+            # TODO: verify that header logs get stored properly and usably
+            if cfg['logheaders']:
+                logging.info(mal.info().read())
             malfile = mal.read()
             md5 = hashlib.md5(malfile).hexdigest()
             # Is this a big race condition problem?
@@ -274,6 +277,7 @@ def main():
 
     cfg['vxcage'] = args.vxcage or config.get('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.get('Maltrieve', 'cuckoo')
+    cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
 
     malq.join()
 
