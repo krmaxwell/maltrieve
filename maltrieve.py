@@ -28,15 +28,9 @@ import requests
 import tempfile
 import sys
 import urllib
-<<<<<<< HEAD
 import urllib2
 import xml.etree.ElementTree as ET
-=======
-import json
-import pickle
-import string
 import ConfigParser
->>>>>>> beta3
 
 from MultiPartForm import *
 from threading import Thread
@@ -51,19 +45,16 @@ def get_malware(q, dumpdir):
         url = q.get()
         logging.info("Fetched URL %s from queue", url)
         logging.info("%s items remaining in queue", q.qsize())
-        mal = requests.get(url).content
+        mal_req = requests.get(url)
+        mal = mal_req.content
         if mal:
-<<<<<<< HEAD
             md5 = hashlib.md5(mal).hexdigest()
             # REVIEW: Is this a big race condition problem?
-=======
-            # TODO: verify that header logs get stored properly and usably
+            # TODO: store these in the JSON DB
             if cfg['logheaders']:
-                logging.info(mal.info().read())
-            malfile = mal.read()
-            md5 = hashlib.md5(malfile).hexdigest()
+                logging.info(mal_req.headers)
+            md5 = hashlib.md5(mal).hexdigest()
             # Is this a big race condition problem?
->>>>>>> beta3
             if md5 not in hashes:
                 logging.info("Found file %s at URL %s", md5, url)
                 logging.debug("Going to put file in directory %s", dumpdir)
@@ -214,21 +205,6 @@ def main():
 
     # make sure we can open the directory for writing
     if args.dumpdir:
-<<<<<<< HEAD
-        try:
-            d = tempfile.mkdtemp(dir=args.dumpdir)
-            dump_dir = args.dumpdir
-        except Exception as e:
-            logging.error('Could not open %s for writing (%s), using default',
-                          dump_dir, e)
-            dump_dir = '/tmp/malware'
-        else:
-            os.rmdir(d)
-    else:
-        dump_dir = '/tmp/malware'
-
-    logging.info('Using %s as dump directory', dump_dir)
-=======
         cfg['dumpdir'] = args.dumpdir
     elif config.get('Maltrieve', 'dumpdir'):
         cfg['dumpdir'] = config.get('Maltrieve', 'dumpdir')
@@ -245,7 +221,6 @@ def main():
         os.rmdir(d)
 
     logging.info('Using %s as dump directory', cfg['dumpdir'])
->>>>>>> beta3
 
     if os.path.exists('hashes.obj'):
         with open('hashes.obj', 'rb') as hashfile:
@@ -292,9 +267,9 @@ def main():
             url = re.sub('&amp;', '&', line.text)
             push_malware_url(url, malq)
 
-    joxeantext = get_URL('http://malwareurls.joxeankoret.com/normal.txt')
-    if joxeantext:
-        for url in joxeantext:
+    joxean_text = get_URL('http://malwareurls.joxeankoret.com/normal.txt')
+    if joxean_text:
+        for url in joxean_text:
             if not re.match("^#", url):
                 push_malware_URL(url, malq)
 
