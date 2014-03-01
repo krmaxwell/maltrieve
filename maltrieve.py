@@ -38,8 +38,6 @@ from lxml import etree
 
 from bs4 import BeautifulSoup
 
-from malutil import *
-
 
 def get_malware(q, dumpdir):
     while True:
@@ -112,7 +110,7 @@ def get_xml_list(url, q):
     malware_urls = []
     descriptions = []
 
-    tree = get_XML(url)
+    tree = ET.parse(requests.get(url).text)
     if tree:
         descriptions = tree.findall('channel/item/description')
 
@@ -223,6 +221,7 @@ def main():
         worker.setDaemon(True)
         worker.start()
 
+    # TODO: refactor so we're just appending to the queue here
     get_xml_list('http://www.malwaredomainlist.com/hostslist/mdl.xml', malq)
     get_xml_list('http://malc0de.com/rss', malq)
     get_xml_list('http://www.malwareblacklist.com/mbl.xml', malq)
