@@ -16,23 +16,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/
 
-import urllib2
-import logging
 import argparse
-import tempfile
-import re
-import hashlib
-import os
-import sys
 import datetime
-import xml.etree.ElementTree as ET
-import itertools
-import mimetools
-import mimetypes
-import urllib
+import hashlib
 import json
+import logging
+import os
 import pickle
-import string
+import re
+import tempfile
+import sys
+import urllib
+import urllib2
+import xml.etree.ElementTree as ET
+
 from MultiPartForm import *
 from threading import Thread
 from Queue import Queue
