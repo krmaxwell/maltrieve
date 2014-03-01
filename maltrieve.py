@@ -80,17 +80,17 @@ def get_malware(q, dumpdir):
                         try:
                             # Note that this request does NOT go through proxies
                             response = requests.post(url, headers=headers, data=body)
+                            response_data = response.json()
+                            logging.info("Submitted %s to VxCage, response was %s",
+                                         md5, response_data["message"])
+                            logging.info("Deleting file as it has been uploaded to VxCage")
+                            try:
+                                os.remove(os.path.join(dumpdir, md5))
+                            except:
+                                logging.info("Exception when attempting to delete file: %s",
+                                             os.path.join(dumpdir, md5))
                         except:
                             logging.info("Exception caught from VxCage")
-                        response_data = response.json()
-                        logging.info("Submitted %s to VxCage, response was %s",
-                                     md5, response_data["message"])
-                        logging.info("Deleting file as it has been uploaded to VxCage")
-                        try:
-                            os.remove(os.path.join(dumpdir, md5))
-                        except:
-                            logging.info("Exception when attempting to delete file: %s",
-                                         os.path.join(dumpdir, md5))
                 if cfg['cuckoo']:
                     f = open(os.path.join(dumpdir, md5), 'rb')
                     form = MultiPartForm()
@@ -223,7 +223,7 @@ def main():
             pasturls = pickle.load(urlfile)
 
     for i in range(NUMTHREADS):
-        worker = Thread(target=get_malware, args=(malq, dump_dir,))
+        worker = Thread(target=get_malware, args=(malq, cfg['dumpdir'],))
         worker.setDaemon(True)
         worker.start()
 
