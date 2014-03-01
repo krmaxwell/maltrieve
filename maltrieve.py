@@ -24,6 +24,7 @@ import logging
 import os
 import pickle
 import re
+import requests
 import tempfile
 import sys
 import urllib
@@ -45,10 +46,9 @@ def get_malware(q, dumpdir):
         url = q.get()
         logging.info("Fetched URL %s from queue", url)
         logging.info("%s items remaining in queue", q.qsize())
-        mal = get_URL(url)
+        mal = requests.get(url).content
         if mal:
-            malfile = mal.read()
-            md5 = hashlib.md5(malfile).hexdigest()
+            md5 = hashlib.md5(mal).hexdigest()
             # Is this a big race condition problem?
             if md5 not in hashes:
                 logging.info("Found file %s at URL %s", md5, url)
@@ -64,7 +64,7 @@ def get_malware(q, dumpdir):
                             raise
                 # store the file and log the data
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
-                    f.write(malfile)
+                    f.write(mal)
                     logging.info("Stored %s in %s", md5, dumpdir)
                 if args.vxcage:
                     if os.path.exists(os.path.join(dumpdir, md5)):
@@ -72,6 +72,7 @@ def get_malware(q, dumpdir):
                         form = MultiPartForm()
                         form.add_file('file', md5, fileHandle=f)
                         form.add_field('tags', 'maltrieve')
+                        # TODO: check this carefully when porting to requests
                         request = urllib2.Request('http://localhost:8080/malware/add')
                         request.add_header('User-agent', 'Maltrieve')
                         body = str(form)
@@ -110,8 +111,8 @@ def get_malware(q, dumpdir):
         q.task_done()
 
 
-def get_XML_list(url, q):
-    malwareurls = []
+def get_xml_list(url, q):
+    malware_urls = []
     descriptions = []
 
     tree = get_XML(url)
@@ -126,13 +127,13 @@ def get_XML_list(url, q):
         url = re.sub('&amp;', '&', url)
         if not re.match('http', url):
             url = 'http://'+url
-        malwareurls.append(url)
+        malware_urls.append(url)
 
-    for url in malwareurls:
-        push_malware_URL(url, q)
+    for url in malware_urls:
+        push_malware_url(url, q)
 
 
-def push_malware_URL(url, q):
+def push_malware_url(url, q):
     url = url.strip()
     if url not in pasturls:
         logging.info('Adding new URL to queue: %s', url)
@@ -155,7 +156,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--proxy",
                         help="Define HTTP proxy as address:port")
-    parser.add_argument("-d", "--dumpdir",
+    parser.add_argument("-d", "--dump_dir",
                         help="Define dump directory for retrieved files")
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
@@ -200,17 +201,17 @@ def main():
     if args.dumpdir:
         try:
             d = tempfile.mkdtemp(dir=args.dumpdir)
-            dumpdir = args.dumpdir
+            dump_dir = args.dumpdir
         except Exception as e:
             logging.error('Could not open %s for writing (%s), using default',
-                          dumpdir, e)
-            dumpdir = '/tmp/malware'
+                          dump_dir, e)
+            dump_dir = '/tmp/malware'
         else:
             os.rmdir(d)
     else:
-        dumpdir = '/tmp/malware'
+        dump_dir = '/tmp/malware'
 
-    logging.info('Using %s as dump directory', dumpdir)
+    logging.info('Using %s as dump directory', dump_dir)
 
     if os.path.exists('hashes.obj'):
         with open('hashes.obj', 'rb') as hashfile:
@@ -221,49 +222,51 @@ def main():
             pasturls = pickle.load(urlfile)
 
     for i in range(NUMTHREADS):
-        worker = Thread(target=get_malware, args=(malq, dumpdir,))
+        worker = Thread(target=get_malware, args=(malq, dump_dir,))
         worker.setDaemon(True)
         worker.start()
 
-    get_XML_list('http://www.malwaredomainlist.com/hostslist/mdl.xml', malq)
-    get_XML_list('http://malc0de.com/rss', malq)
-    get_XML_list('http://www.malwareblacklist.com/mbl.xml', malq)
+    get_xml_list('http://www.malwaredomainlist.com/hostslist/mdl.xml', malq)
+    get_xml_list('http://malc0de.com/rss', malq)
+    get_xml_list('http://www.malwareblacklist.com/mbl.xml', malq)
 
     # TODO: wrap these in functions?
-    for url in get_URL('http://vxvault.siri-urz.net/URL_List.php'):
+    for url in requests.get('http://vxvault.siri-urz.net/URL_List.php').text:
         if re.match('http', url):
-            push_malware_URL(url, malq)
+            push_malware_url(url, malq)
 
-    sacourtext = get_URL('http://www.sacour.cn/list/%d-%d/%d%d%d.htm' %
-                         (now.year, now.month, now.year, now.month, now.day))
-    if sacourtext:
-        sacoursoup = BeautifulSoup(sacourtext)
-        for url in sacoursoup.stripped_strings:
+    sacour_text = requests.get('http://www.sacour.cn/list/%d-%d/%d%d%d.htm' %
+                         (now.year, now.month, now.year, now.month, now.day)).text
+    if sacour_text:
+        sacour_soup = BeautifulSoup(sacour_text)
+        for url in sacour_soup.stripped_strings:
             if re.match("^http", url):
-                push_malware_URL(url, malq)
+                push_malware_url(url, malq)
 
-    urlquerytext = get_URL('http://urlquery.net/')
-    if urlquerytext:
-        urlquerysoup = BeautifulSoup(urlquerytext)
-        for t in urlquerysoup.find_all("table", class_="test"):
+    urlquery_text = requests.get('http://urlquery.net/').text
+    if urlquery_text:
+        urlquery_soup = BeautifulSoup(urlquery_text)
+        for t in urlquery_soup.find_all("table", class_="test"):
             for a in t.find_all("a"):
-                push_malware_URL(a['title'], malq)
+                push_malware_url(a['title'], malq)
 
-    cleanmxtext = get_URL('http://support.clean-mx.de/clean-mx/xmlviruses.php?')
-    if cleanmxtext:
-        cleanmxxml = etree.parse(cleanmxtext)
-        for line in cleanmxxml.xpath("//url"):
+    cleanmx_text = requests.get('http://support.clean-mx.de/clean-mx/xmlviruses.php?').text
+    if cleanmx_text:
+        cleanmx_xml = etree.parse(cleanmx_text)
+        for line in cleanmx_xml.xpath("//url"):
             url = re.sub('&amp;', '&', line.text)
-            push_malware_URL(url, malq)
+            push_malware_url(url, malq)
 
     malq.join()
 
     if pasturls:
         logging.info('Dumping past URLs to file')
+        # TODO: redo as JSON
         with open('urls.obj', 'w') as urlfile:
             pickle.dump(pasturls, urlfile)
 
     if hashes:
+        # TODO: redo as JSON
         with open('hashes.obj', 'w') as hashfile:
             pickle.dump(hashes, hashfile)
 
