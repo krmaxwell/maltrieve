@@ -123,7 +123,7 @@ def get_xml_list(url, q):
             url = d.text.split(' ')[4].rstrip(',')
         url = re.sub('&amp;', '&', url)
         if not re.match('http', url):
-            url = 'http://'+url
+            url = 'http://' + url
         malware_urls.append(url)
 
     for url in malware_urls:
@@ -238,7 +238,7 @@ def main():
             push_malware_url(url, malq)
 
     sacour_text = requests.get('http://www.sacour.cn/list/%d-%d/%d%d%d.htm' %
-                         (now.year, now.month, now.year, now.month, now.day), proxies=cfg['proxy']).text
+                               (now.year, now.month, now.year, now.month, now.day), proxies=cfg['proxy']).text
     if sacour_text:
         sacour_soup = BeautifulSoup(sacour_text)
         for url in sacour_soup.stripped_strings:
@@ -281,6 +281,7 @@ def main():
         # TODO: redo as JSON
         with open('hashes.obj', 'w') as hashfile:
             pickle.dump(hashes, hashfile)
+
 
 if __name__ == "__main__":
     try:
