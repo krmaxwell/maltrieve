@@ -1,4 +1,6 @@
-*.py[co]
+# Compiled Python code
+*.py[cod]
+*.so
 
 # Packages
 *.egg
@@ -11,6 +13,8 @@ bin
 var
 sdist
 develop-eggs
+test
+MANIFEST
 .installed.cfg
 
 # Installer logs
@@ -20,10 +24,10 @@ pip-log.txt
 .coverage
 .tox
 
-#Translations
+# Translations
 *.mo
 
-#Mr Developer
+# Mr Developer
 .mr.developer.cfg
 
 # log file
