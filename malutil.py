@@ -13,7 +13,7 @@ def get_URL(url):
         elif hasattr(e, 'code'):
             logging.warning('Server couldn\'t fulfill request: %s\n', e.code)
     except ValueError as e:
-        logging.warning(e)
+        logging.warning('urlopen() returned error %s\n', e)
 
     return False
 
