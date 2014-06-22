@@ -214,11 +214,17 @@ def main():
 
     logging.info('Using %s as dump directory', cfg['dumpdir'])
 
-    if os.path.exists('hashes.obj'):
+    if os.path.exists('hashes.json'):
+        with open('hashes.json', 'rb') as hasfile:
+            hashes = json.load(hashfile)
+    elif os.path.exists('hashes.obj'):
         with open('hashes.obj', 'rb') as hashfile:
             hashes = pickle.load(hashfile)
 
-    if os.path.exists('urls.obj'):
+    if os.path.exists('urls.json'):
+        with open('urls.json', 'rb') as urlfile:
+            pasturls = json.load(urlfile)
+    elif os.path.exists('urls.obj'):
         with open('urls.obj', 'rb') as urlfile:
             pasturls = pickle.load(urlfile)
 
@@ -273,14 +279,12 @@ def main():
 
     if pasturls:
         logging.info('Dumping past URLs to file')
-        # TODO: redo as JSON
-        with open('urls.obj', 'w') as urlfile:
-            pickle.dump(pasturls, urlfile)
+        with open('urls.json', 'w') as urlfile:
+            json.dump(pasturls, urlfile)
 
     if hashes:
-        # TODO: redo as JSON
-        with open('hashes.obj', 'w') as hashfile:
-            pickle.dump(hashes, hashfile)
+        with open('hashes.json', 'w') as hashfile:
+            json.dump(hashes, hashfile)
 
 
 if __name__ == "__main__":
