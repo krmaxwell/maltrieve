@@ -3,51 +3,51 @@
   <head>
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
     <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
-
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
     <title>Maltrieve by technoskald</title>
   </head>
 
   <body>
+    <div id="container">
+      <div class="inner">
 
-    <header>
-      <div class="container">
-        <h1>Maltrieve</h1>
-        <h2>A tool to retrieve malware directly from the source for security researchers.</h2>
+        <header>
+          <h1>Maltrieve</h1>
+          <h2>A tool to retrieve malware directly from the source for security researchers.</h2>
+        </header>
 
-        <section id="downloads">
-          <a href="https://github.com/technoskald/maltrieve/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/technoskald/maltrieve/tarball/master" class="btn">Download as .tar.gz</a>
-          <a href="https://github.com/technoskald/maltrieve" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        <section id="downloads" class="clearfix">
+          <a href="https://github.com/technoskald/maltrieve/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+          <a href="https://github.com/technoskald/maltrieve/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+          <a href="https://github.com/technoskald/maltrieve" id="view-on-github" class="button"><span>View on GitHub</span></a>
         </section>
-      </div>
-    </header>
 
-    <div class="container">
-      <section id="main_content">
-        <h1>Maltrieve</h1>
+        <hr>
+
+        <section id="main_content">
+          <h1>
+<a name="maltrieve" class="anchor" href="#maltrieve"><span class="octicon octicon-link"></span></a>Maltrieve</h1>
 
 <p>Maltrieve originated as a fork of <a href="https://github.com/ricardo-dias/mwcrawler">mwcrawler</a>. It retrieves malware directly from the sources as listed at a number of sites, including:</p>
 
 <ul>
-<li><a href="http://www.malwaredomainlist.com/hostslist/mdl.xml">Malware Domain List</a></li>
-<li><a href="http://vxvault.siri-urz.net/URL_List.php">VX Vault</a></li>
 <li><a href="http://malc0de.com/rss">Malc0de</a></li>
+<li><a href="http://www.malwareblacklist.com/mbl.xml">Malware Black List</a></li>
+<li><a href="http://www.malwaredomainlist.com/hostslist/mdl.xml">Malware Domain List</a></li>
+<li><a href="http://www.malware.com.br/cgi/submit?action=list">Malware Patrol</a></li>
 <li><a href="http://www.sacour.cn">Sacour.cn</a></li>
-</ul><p>Pending sources include:</p>
-
-<ul>
-<li><a href="http://urlquery.net/">http://urlquery.net/</a></li>
-<li><a href="http://www.malware.com.br/cgi/submit?action=list">http://www.malware.com.br/cgi/submit?action=list</a></li>
-<li><a href="http://support.clean-mx.de/clean-mx/xmlviruses.php">http://support.clean-mx.de/clean-mx/xmlviruses.php</a></li>
-<li><a href="http://www.nictasoft.com/ace/malware-urls/">http://www.nictasoft.com/ace/malware-urls/</a></li>
+<li><a href="http://vxvault.siri-urz.net/URL_List.php">VX Vault</a></li>
+<li><a href="http://urlquery.net/">URLqery</a></li>
+<li><a href="http://support.clean-mx.de/clean-mx/xmlviruses.php?">CleanMX</a></li>
 </ul><p>These lists will be implemented if/when they return to activity.</p>
 
 <ul>
-<li><a href="http://www.malwareblacklist.com/mbl.xml">Malware Black List</a></li>
 <li><a href="http://minotauranalysis.com/malwarelist-urls.aspx">NovCon Minotaur</a></li>
 </ul><p>Other improvements include:</p>
 
@@ -57,22 +57,28 @@
 <li>Logging of source URLs</li>
 <li>Multiple user agent support</li>
 <li>Better error handling</li>
-<li>Cuckoo support via <a href="https://github.com/bryanbrannigan" class="user-mention">@bryanbrannigan</a>
-</li>
-</ul><h2>Dependencies</h2>
+<li>
+<a href="https://github.com/botherder/vxcage">VxCage</a> and <a href="http://www.cuckoosandbox.org">Cuckoo Sandbox</a> support</li>
+</ul><h2>
+<a name="dependencies" class="anchor" href="#dependencies"><span class="octicon octicon-link"></span></a>Dependencies</h2>
 
 <ul>
+<li>Python 2 (2.6 should be sufficient)</li>
 <li>
 <a href="http://www.crummy.com/software/BeautifulSoup/">BeautifulSoup</a> version 4</li>
-</ul><h2>License</h2>
+<li><a href="http://lxml.de">lxml</a></li>
+</ul><h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
 
 <p>Released under GPL version 3. See the LICENSE file for full details.</p>
 
-<h2>Known bugs</h2>
+<h2>
+<a name="known-bugs" class="anchor" href="#known-bugs"><span class="octicon octicon-link"></span></a>Known bugs</h2>
 
 <p>We list all the bugs we know about (plus some things we know we need to add) at the <a href="https://github.com/technoskald/maltrieve/issues">Github issues</a> page.</p>
 
-<h2>How you can help</h2>
+<h2>
+<a name="how-you-can-help" class="anchor" href="#how-you-can-help"><span class="octicon octicon-link"></span></a>How you can help</h2>
 
 <p>Aside from pull requests, non-developers can open issues on <a href="https://github.com/technoskald/maltrieve">Github</a>. Things we'd really appreciate:</p>
 
@@ -81,9 +87,15 @@
 <li>Suggestions of additional sources for malware lists</li>
 <li>Descriptions of how you use it and ways we can improve it for you</li>
 </ul><p>If you'd prefer not to open an issue, you can <a href="https://twitter.com/kylemaxwell">contact me on Twitter</a> or <a href="mailto:krmaxwell@gmail.com">email</a>.</p>
-      </section>
-    </div>
+        </section>
 
-    
+        <footer>
+          Maltrieve is maintained by <a href="https://github.com/technoskald">technoskald</a><br>
+          This page was generated by <a href="http://pages.github.com">GitHub Pages</a>. Tactile theme by <a href="https://twitter.com/jasonlong">Jason Long</a>.
+        </footer>
+
+        
+      </div>
+    </div>
   </body>
 </html>
