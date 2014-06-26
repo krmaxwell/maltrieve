@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Copyright 2013 Kyle Maxwell
 # Includes code from mwcrawler, (c) 2012 Ricardo Dias. Used under license.
 
@@ -153,7 +155,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--proxy",
                         help="Define HTTP proxy as address:port")
-    parser.add_argument("-d", "--dump_dir",
+    parser.add_argument("-d", "--dumpdir",
                         help="Define dump directory for retrieved files")
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
@@ -165,10 +167,10 @@ def main():
 
     global cfg
     cfg = dict()
-    global args
     args = parser.parse_args()
 
-    global config = ConfigParser.ConfigParser()
+    global config
+    config = ConfigParser.ConfigParser()
     config.read('maltrieve.cfg')
 
     if args.logfile or config.get('Maltrieve', 'logfile'):
@@ -186,8 +188,10 @@ def main():
 
     if args.proxy:
         cfg['proxy'] = {'http': args.proxy}
-    elif config.get('Maltrieve', 'proxy'):
+    elif config.has_option('Maltrieve', 'proxy'):
         cfg['proxy'] = {'http': config.get('Maltrieve', 'proxy')}
+    else:
+        cfg['proxy'] = None
 
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
