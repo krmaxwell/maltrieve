@@ -35,7 +35,7 @@ import ConfigParser
 from MultiPartForm import *
 from threading import Thread
 from Queue import Queue
-
+from lxml import etree
 from bs4 import BeautifulSoup
 
 
@@ -46,14 +46,14 @@ def get_malware(q, dumpdir):
         logging.info("%s items remaining in queue", q.qsize())
         try:
             mal_req = requests.get(url, proxies=cfg['proxy'])
-        except ConnectionError as e:
+        except requests.ConnectionError as e:
             logging.info("Could not connect to %s: %s" % (url, e))
             break
         mal = mal_req.content
         if mal:
             # REVIEW: Is this a big race condition problem?
             # TODO: store these in the JSON DB
-            if cfg['logheaders']:
+            if 'logheaders' in cfg:
                 logging.info(mal_req.headers)
             md5 = hashlib.md5(mal).hexdigest()
             # Is this a big race condition problem?
@@ -70,7 +70,7 @@ def get_malware(q, dumpdir):
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
                     f.write(mal)
                     logging.info("Stored %s in %s", md5, dumpdir)
-                if cfg['vxcage']:
+                if 'vxcage' in cfg:
                     if os.path.exists(os.path.join(dumpdir, md5)):
                         f = open(os.path.join(dumpdir, md5), 'rb')
                         form = MultiPartForm()
@@ -96,7 +96,7 @@ def get_malware(q, dumpdir):
                                              os.path.join(dumpdir, md5))
                         except:
                             logging.info("Exception caught from VxCage")
-                if cfg['cuckoo']:
+                if 'cuckoo' in cfg:
                     f = open(os.path.join(dumpdir, md5), 'rb')
                     form = MultiPartForm()
                     form.add_file('file', md5, fileHandle=f)
