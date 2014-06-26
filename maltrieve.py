@@ -20,6 +20,7 @@
 
 import argparse
 import datetime
+import feedparser
 import hashlib
 import json
 import logging
@@ -29,13 +30,11 @@ import re
 import requests
 import tempfile
 import sys
-import xml.etree.ElementTree as ET
 import ConfigParser
 
 from MultiPartForm import *
 from threading import Thread
 from Queue import Queue
-from lxml import etree
 
 from bs4 import BeautifulSoup
 
@@ -110,26 +109,20 @@ def get_malware(q, dumpdir):
         q.task_done()
 
 
-def get_xml_list(url, q):
-    malware_urls = []
-    descriptions = []
+def get_xml_list(feed_url, q):
 
-    tree = ET.parse(requests.get(url).text)
-    if tree:
-        descriptions = tree.findall('channel/item/description')
+    feed = feedparser.parse(feed_url)
 
-    for d in descriptions:
-        logging.info('Parsing description %s', d.text)
-        url = d.text.split(' ')[1].rstrip(',')
+    for entry in feed.entries:
+        desc = entry.description
+        logging.info('Parsing description %s', desc)
+        url = desc.split(' ')[1].rstrip(',')
         if url == '-':
-            url = d.text.split(' ')[4].rstrip(',')
+            url = desc.split(' ')[4].rstrip(',')
         url = re.sub('&amp;', '&', url)
         if not re.match('http', url):
             url = 'http://' + url
-        malware_urls.append(url)
-
-    for url in malware_urls:
-        push_malware_url(url, q)
+        push_malware_url(url,q)
 
 
 def push_malware_url(url, q):
@@ -219,7 +212,7 @@ def main():
     logging.info('Using %s as dump directory', cfg['dumpdir'])
 
     if os.path.exists('hashes.json'):
-        with open('hashes.json', 'rb') as hasfile:
+        with open('hashes.json', 'rb') as hashfile:
             hashes = json.load(hashfile)
     elif os.path.exists('hashes.obj'):
         with open('hashes.obj', 'rb') as hashfile:

@@ -36,7 +36,7 @@ Dependencies
 ------------
 * Python 2 (2.6 should be sufficient)
 * [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/) version 4
-* [lxml](http://lxml.de)
+* [feedparser](https://pypi.python.org/pypi/feedparser)
 * [Requests](http://www.python-requests.org)
 
 License
