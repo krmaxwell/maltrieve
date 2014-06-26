@@ -36,7 +36,7 @@ from MultiPartForm import *
 from threading import Thread
 from Queue import Queue
 from lxml import etree
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, UnicodeDammit
 
 
 def get_malware(q, dumpdir):
@@ -259,12 +259,12 @@ def main():
             for a in t.find_all("a"):
                 push_malware_url(a['title'], malq)
 
-    ''' disabling due to parsing problems
-    cleanmx_xml = etree.parse('http://support.clean-mx.de/clean-mx/xmlviruses.php?')
+    cleanmx_text = requests.get('http://support.clean-mx.de/clean-mx/xmlviruses.php?').text
+    cleanmx_text = UnicodeDammit(cleanmx_text)
+    cleanmx_xml = etree.fromstring(cleanmx_text)
     for line in cleanmx_xml.xpath("//url"):
         url = re.sub('&amp;', '&', line.text)
         push_malware_url(url, malq)
-    '''
 
     joxean_text = requests.get('http://malwareurls.joxeankoret.com/normal.txt', proxies=cfg['proxy']).text
     if joxean_text:
