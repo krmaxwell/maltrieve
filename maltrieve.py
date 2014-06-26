@@ -126,7 +126,7 @@ def get_xml_list(feed_url, q):
         url = re.sub('&amp;', '&', url)
         if not re.match('http', url):
             url = 'http://' + url
-        push_malware_url(url,q)
+        push_malware_url(url, q)
 
 
 def push_malware_url(url, q):
@@ -259,12 +259,12 @@ def main():
             for a in t.find_all("a"):
                 push_malware_url(a['title'], malq)
 
-    cleanmx_text = requests.get('http://support.clean-mx.de/clean-mx/xmlviruses.php?', proxies=cfg['proxy']).text
-    if cleanmx_text:
-        cleanmx_xml = etree.parse(cleanmx_text)
-        for line in cleanmx_xml.xpath("//url"):
-            url = re.sub('&amp;', '&', line.text)
-            push_malware_url(url, malq)
+    ''' disabling due to parsing problems
+    cleanmx_xml = etree.parse('http://support.clean-mx.de/clean-mx/xmlviruses.php?')
+    for line in cleanmx_xml.xpath("//url"):
+        url = re.sub('&amp;', '&', line.text)
+        push_malware_url(url, malq)
+    '''
 
     joxean_text = requests.get('http://malwareurls.joxeankoret.com/normal.txt', proxies=cfg['proxy']).text
     if joxean_text:
@@ -272,8 +272,8 @@ def main():
             if not re.match("^#", url):
                 push_malware_url(url, malq)
 
-    cfg['vxcage'] = args.vxcage or config.get('Maltrieve', 'vxcage')
-    cfg['cuckoo'] = args.cuckoo or config.get('Maltrieve', 'cuckoo')
+    cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
+    cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
     cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
 
     malq.join()
