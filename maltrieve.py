@@ -44,7 +44,11 @@ def get_malware(q, dumpdir):
         url = q.get()
         logging.info("Fetched URL %s from queue", url)
         logging.info("%s items remaining in queue", q.qsize())
-        mal_req = requests.get(url, proxies=cfg['proxy'])
+        try:
+            mal_req = requests.get(url, proxies=cfg['proxy'])
+        except ConnectionError as e:
+            logging.info("Could not connect to %s: %s" % (url, e))
+            break
         mal = mal_req.content
         if mal:
             # REVIEW: Is this a big race condition problem?
