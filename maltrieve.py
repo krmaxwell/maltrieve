@@ -59,7 +59,6 @@ def get_malware(q, dumpdir):
             # Is this a big race condition problem?
             if md5 not in hashes:
                 logging.info("Found file %s at URL %s", md5, url)
-                logging.debug("Going to put file in directory %s", dumpdir)
                 if not os.path.isdir(dumpdir):
                     try:
                         logging.info("Creating dumpdir %s", dumpdir)
@@ -119,7 +118,6 @@ def get_xml_list(feed_url, q):
 
     for entry in feed.entries:
         desc = entry.description
-        logging.info('Parsing description %s', desc)
         url = desc.split(' ')[1].rstrip(',')
         if url == '-':
             url = desc.split(' ')[4].rstrip(',')
@@ -192,9 +190,8 @@ def main():
 
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
-
-    my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
-    logging.info('External sites see %s', my_ip)
+        my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
+        logging.info('External sites see %s', my_ip)
 
     # make sure we can open the directory for writing
     if args.dumpdir:
@@ -245,7 +242,8 @@ def main():
             push_malware_url(url, malq)
 
     sacour_text = requests.get('http://www.sacour.cn/list/%d-%d/%d%d%d.htm' %
-                               (now.year, now.month, now.year, now.month, now.day), proxies=cfg['proxy']).text
+                               (now.year, now.month, now.year, now.month,
+                                now.day), proxies=cfg['proxy']).text
     if sacour_text:
         sacour_soup = BeautifulSoup(sacour_text)
         for url in sacour_soup.stripped_strings:
@@ -259,18 +257,16 @@ def main():
             for a in t.find_all("a"):
                 push_malware_url(a['title'], malq)
 
-    cleanmx_text = requests.get('http://support.clean-mx.de/clean-mx/xmlviruses.php?').text
-    cleanmx_text = UnicodeDammit(cleanmx_text)
-    cleanmx_xml = etree.fromstring(cleanmx_text)
-    for line in cleanmx_xml.xpath("//url"):
-        url = re.sub('&amp;', '&', line.text)
-        push_malware_url(url, malq)
+    cleanmx_feed = feedparser.parse('http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64')
+    for entry in cleanmx_feed.entries:
+        push_malware_url(entry.title, malq)
 
-    joxean_text = requests.get('http://malwareurls.joxeankoret.com/normal.txt', proxies=cfg['proxy']).text
-    if joxean_text:
-        for url in joxean_text:
-            if not re.match("^#", url):
-                push_malware_url(url, malq)
+    joxean_text = requests.get('http://malwareurls.joxeankoret.com/normal.txt',
+                               proxies=cfg['proxy']).text
+    joxean_lines = joxean_text.splitlines()
+    for url in joxean_lines:
+        if not re.match("^#", url):
+            push_malware_url(url, malq)
 
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
