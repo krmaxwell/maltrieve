@@ -69,17 +69,9 @@ def get_malware(q, dumpdir):
                     f.write(mal)
                     logging.info("Stored %s in %s", md5, dumpdir)
                 if 'vxcage' in cfg:
-                    store_vxcage(os.path.join(dumpdir,md5))
+                    store_vxcage(os.path.join(dumpdir, md5))
                 if 'cuckoo' in cfg:
-                    f = open(os.path.join(dumpdir, md5), 'rb')
-                    form = MultiPartForm()
-                    form.add_file('file', md5, fileHandle=f)
-                    body = str(form)
-                    url = 'http://localhost:8090/tasks/create/file'
-                    headers = {'User-agent': 'Maltrieve', 'Content-type': form.get_content_type(), 'Content-length': len(body)}
-                    response = requests.post(url, headers=headers, data=body)
-                    response_data = response.json()
-                    logging.info("Submitted %s to cuckoo, task ID %s", md5, response_data["task_id"])
+                    submit_cuckoo(os.path.join(dumpdir, md5))
                 hashes.add(md5)
         q.task_done()
 
@@ -101,6 +93,19 @@ def store_vxcage(filepath):
                 logging.info("Exception when attempting to delete file: %s", filepath)
         except:
             logging.info("Exception caught from VxCage")
+
+
+def submit_cuckoo(filepath):
+    if os.path.exists(filepath):
+        files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
+        url = 'http://localhost:8090/tasks/create/file'
+        headers = {'User-agent': 'Maltrieve'}
+        try:
+            response = requests.post(url, headers=headers, files=files)
+            response_data = response.json()
+            logging.info("Submitted %s to cuckoo, task ID %s", filepath, response_data["task_id"])
+        except:
+            logging.info("Exception caught from Cuckoo")
 
 
 def get_xml_list(feed_url, q):
