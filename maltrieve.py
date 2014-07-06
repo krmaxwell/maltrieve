@@ -34,7 +34,6 @@ import ConfigParser
 
 from threading import Thread
 from Queue import Queue
-from lxml import etree
 from bs4 import BeautifulSoup, UnicodeDammit
 
 
@@ -44,16 +43,16 @@ def get_malware(q, dumpdir):
         logging.info("Fetched URL %s from queue", url)
         logging.info("%s items remaining in queue", q.qsize())
         try:
+            logging.info("Requesting %s" % url)
             mal_req = requests.get(url, proxies=cfg['proxy'])
         except requests.ConnectionError as e:
             logging.info("Could not connect to %s: %s" % (url, e))
             break
         mal = mal_req.content
         if mal:
-            # REVIEW: Is this a big race condition problem?
             # TODO: store these in the JSON DB
             if 'logheaders' in cfg:
-                logging.info(mal_req.headers)
+                logging.info("Returned headers for %s: %r" % (url, mal_req.headers))
             md5 = hashlib.md5(mal).hexdigest()
             # Is this a big race condition problem?
             if md5 not in hashes:
@@ -253,6 +252,7 @@ def main():
             for a in t.find_all("a"):
                 push_malware_url(a['title'], malq)
 
+    # TODO: this doesn't use proxies
     cleanmx_feed = feedparser.parse('http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64')
     for entry in cleanmx_feed.entries:
         push_malware_url(entry.title, malq)
