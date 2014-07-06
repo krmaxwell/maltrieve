@@ -32,7 +32,6 @@ import tempfile
 import sys
 import ConfigParser
 
-from MultiPartForm import *
 from threading import Thread
 from Queue import Queue
 from lxml import etree
@@ -70,46 +69,38 @@ def get_malware(q, dumpdir):
                     f.write(mal)
                     logging.info("Stored %s in %s", md5, dumpdir)
                 if 'vxcage' in cfg:
-                    if os.path.exists(os.path.join(dumpdir, md5)):
-                        f = open(os.path.join(dumpdir, md5), 'rb')
-                        form = MultiPartForm()
-                        form.add_file('file', md5, fileHandle=f)
-                        form.add_field('tags', 'maltrieve')
-                        body = str(form)
-                        # TODO: check this carefully when porting to requests
-                        url = 'http://localhost:8080/malware/add'
-                        headers = {'User-agent': 'Maltrieve',
-                                   'Content-type': form.get_content_type(),
-                                   'Content-length': len(body)}
-                        try:
-                            # Note that this request does NOT go through proxies
-                            response = requests.post(url, headers=headers, data=body)
-                            response_data = response.json()
-                            logging.info("Submitted %s to VxCage, response was %s",
-                                         md5, response_data["message"])
-                            logging.info("Deleting file as it has been uploaded to VxCage")
-                            try:
-                                os.remove(os.path.join(dumpdir, md5))
-                            except:
-                                logging.info("Exception when attempting to delete file: %s",
-                                             os.path.join(dumpdir, md5))
-                        except:
-                            logging.info("Exception caught from VxCage")
+                    store_vxcage(os.path.join(dumpdir,md5))
                 if 'cuckoo' in cfg:
                     f = open(os.path.join(dumpdir, md5), 'rb')
                     form = MultiPartForm()
                     form.add_file('file', md5, fileHandle=f)
                     body = str(form)
                     url = 'http://localhost:8090/tasks/create/file'
-                    headers = {'User-agent': 'Maltrieve',
-                               'Content-type': form.get_content_type(),
-                               'Content-length': len(body)}
+                    headers = {'User-agent': 'Maltrieve', 'Content-type': form.get_content_type(), 'Content-length': len(body)}
                     response = requests.post(url, headers=headers, data=body)
                     response_data = response.json()
-                    logging.info("Submitted %s to cuckoo, task ID %s", md5,
-                                 response_data["task_id"])
+                    logging.info("Submitted %s to cuckoo, task ID %s", md5, response_data["task_id"])
                 hashes.add(md5)
         q.task_done()
+
+
+def store_vxcage(filepath):
+    if os.path.exists(filepath):
+        files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
+        url = 'http://localhost:8080/malware/add'
+        headers = {'User-agent': 'Maltrieve'}
+        try:
+            # Note that this request does NOT go through proxies
+            response = requests.post(url, headers=headers, files=files)
+            response_data = response.json()
+            logging.info("Submitted %s to VxCage, response was %s", md5, response_data["message"])
+            logging.info("Deleting file as it has been uploaded to VxCage")
+            try:
+                os.remove(filepath)
+            except:
+                logging.info("Exception when attempting to delete file: %s", filepath)
+        except:
+            logging.info("Exception caught from VxCage")
 
 
 def get_xml_list(feed_url, q):
