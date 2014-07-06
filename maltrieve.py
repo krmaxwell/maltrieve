@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Copyright 2013 Kyle Maxwell
 # Includes code from mwcrawler, (c) 2012 Ricardo Dias. Used under license.
 
@@ -18,6 +20,7 @@
 
 import argparse
 import datetime
+import feedparser
 import hashlib
 import json
 import logging
@@ -27,15 +30,12 @@ import re
 import requests
 import tempfile
 import sys
-import xml.etree.ElementTree as ET
 import ConfigParser
 
-from MultiPartForm import *
 from threading import Thread
 from Queue import Queue
 from lxml import etree
-
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, UnicodeDammit
 
 
 def get_malware(q, dumpdir):
@@ -43,18 +43,21 @@ def get_malware(q, dumpdir):
         url = q.get()
         logging.info("Fetched URL %s from queue", url)
         logging.info("%s items remaining in queue", q.qsize())
-        mal_req = requests.get(url, proxies=cfg['proxy'])
+        try:
+            mal_req = requests.get(url, proxies=cfg['proxy'])
+        except requests.ConnectionError as e:
+            logging.info("Could not connect to %s: %s" % (url, e))
+            break
         mal = mal_req.content
         if mal:
             # REVIEW: Is this a big race condition problem?
             # TODO: store these in the JSON DB
-            if cfg['logheaders']:
+            if 'logheaders' in cfg:
                 logging.info(mal_req.headers)
             md5 = hashlib.md5(mal).hexdigest()
             # Is this a big race condition problem?
             if md5 not in hashes:
                 logging.info("Found file %s at URL %s", md5, url)
-                logging.debug("Going to put file in directory %s", dumpdir)
                 if not os.path.isdir(dumpdir):
                     try:
                         logging.info("Creating dumpdir %s", dumpdir)
@@ -65,68 +68,58 @@ def get_malware(q, dumpdir):
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
                     f.write(mal)
                     logging.info("Stored %s in %s", md5, dumpdir)
-                if cfg['vxcage']:
-                    if os.path.exists(os.path.join(dumpdir, md5)):
-                        f = open(os.path.join(dumpdir, md5), 'rb')
-                        form = MultiPartForm()
-                        form.add_file('file', md5, fileHandle=f)
-                        form.add_field('tags', 'maltrieve')
-                        body = str(form)
-                        # TODO: check this carefully when porting to requests
-                        url = 'http://localhost:8080/malware/add'
-                        headers = {'User-agent': 'Maltrieve',
-                                   'Content-type': form.get_content_type(),
-                                   'Content-length': len(body)}
-                        try:
-                            # Note that this request does NOT go through proxies
-                            response = requests.post(url, headers=headers, data=body)
-                            response_data = response.json()
-                            logging.info("Submitted %s to VxCage, response was %s",
-                                         md5, response_data["message"])
-                            logging.info("Deleting file as it has been uploaded to VxCage")
-                            try:
-                                os.remove(os.path.join(dumpdir, md5))
-                            except:
-                                logging.info("Exception when attempting to delete file: %s",
-                                             os.path.join(dumpdir, md5))
-                        except:
-                            logging.info("Exception caught from VxCage")
-                if cfg['cuckoo']:
-                    f = open(os.path.join(dumpdir, md5), 'rb')
-                    form = MultiPartForm()
-                    form.add_file('file', md5, fileHandle=f)
-                    body = str(form)
-                    url = 'http://localhost:8090/tasks/create/file'
-                    headers = {'User-agent': 'Maltrieve',
-                               'Content-type': form.get_content_type(),
-                               'Content-length': len(body)}
-                    response = requests.post(url, headers=headers, data=body)
-                    response_data = response.json()
-                    logging.info("Submitted %s to cuckoo, task ID %s", md5,
-                                 response_data["task_id"])
+                if 'vxcage' in cfg:
+                    store_vxcage(os.path.join(dumpdir, md5))
+                if 'cuckoo' in cfg:
+                    submit_cuckoo(os.path.join(dumpdir, md5))
                 hashes.add(md5)
         q.task_done()
 
 
-def get_xml_list(url, q):
-    malware_urls = []
-    descriptions = []
+def store_vxcage(filepath):
+    if os.path.exists(filepath):
+        files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
+        url = 'http://localhost:8080/malware/add'
+        headers = {'User-agent': 'Maltrieve'}
+        try:
+            # Note that this request does NOT go through proxies
+            response = requests.post(url, headers=headers, files=files)
+            response_data = response.json()
+            logging.info("Submitted %s to VxCage, response was %s", md5, response_data["message"])
+            logging.info("Deleting file as it has been uploaded to VxCage")
+            try:
+                os.remove(filepath)
+            except:
+                logging.info("Exception when attempting to delete file: %s", filepath)
+        except:
+            logging.info("Exception caught from VxCage")
 
-    tree = ET.parse(requests.get(url).text)
-    if tree:
-        descriptions = tree.findall('channel/item/description')
 
-    for d in descriptions:
-        logging.info('Parsing description %s', d.text)
-        url = d.text.split(' ')[1].rstrip(',')
+def submit_cuckoo(filepath):
+    if os.path.exists(filepath):
+        files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
+        url = 'http://localhost:8090/tasks/create/file'
+        headers = {'User-agent': 'Maltrieve'}
+        try:
+            response = requests.post(url, headers=headers, files=files)
+            response_data = response.json()
+            logging.info("Submitted %s to cuckoo, task ID %s", filepath, response_data["task_id"])
+        except:
+            logging.info("Exception caught from Cuckoo")
+
+
+def get_xml_list(feed_url, q):
+
+    feed = feedparser.parse(feed_url)
+
+    for entry in feed.entries:
+        desc = entry.description
+        url = desc.split(' ')[1].rstrip(',')
         if url == '-':
-            url = d.text.split(' ')[4].rstrip(',')
+            url = desc.split(' ')[4].rstrip(',')
         url = re.sub('&amp;', '&', url)
         if not re.match('http', url):
             url = 'http://' + url
-        malware_urls.append(url)
-
-    for url in malware_urls:
         push_malware_url(url, q)
 
 
@@ -153,7 +146,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--proxy",
                         help="Define HTTP proxy as address:port")
-    parser.add_argument("-d", "--dump_dir",
+    parser.add_argument("-d", "--dumpdir",
                         help="Define dump directory for retrieved files")
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
@@ -165,10 +158,10 @@ def main():
 
     global cfg
     cfg = dict()
-    global args
     args = parser.parse_args()
 
-    global config = ConfigParser.ConfigParser()
+    global config
+    config = ConfigParser.ConfigParser()
     config.read('maltrieve.cfg')
 
     if args.logfile or config.get('Maltrieve', 'logfile'):
@@ -186,14 +179,15 @@ def main():
 
     if args.proxy:
         cfg['proxy'] = {'http': args.proxy}
-    elif config.get('Maltrieve', 'proxy'):
+    elif config.has_option('Maltrieve', 'proxy'):
         cfg['proxy'] = {'http': config.get('Maltrieve', 'proxy')}
+    else:
+        cfg['proxy'] = None
 
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
-
-    my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
-    logging.info('External sites see %s', my_ip)
+        my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
+        logging.info('External sites see %s', my_ip)
 
     # make sure we can open the directory for writing
     if args.dumpdir:
@@ -215,7 +209,7 @@ def main():
     logging.info('Using %s as dump directory', cfg['dumpdir'])
 
     if os.path.exists('hashes.json'):
-        with open('hashes.json', 'rb') as hasfile:
+        with open('hashes.json', 'rb') as hashfile:
             hashes = json.load(hashfile)
     elif os.path.exists('hashes.obj'):
         with open('hashes.obj', 'rb') as hashfile:
@@ -244,7 +238,8 @@ def main():
             push_malware_url(url, malq)
 
     sacour_text = requests.get('http://www.sacour.cn/list/%d-%d/%d%d%d.htm' %
-                               (now.year, now.month, now.year, now.month, now.day), proxies=cfg['proxy']).text
+                               (now.year, now.month, now.year, now.month,
+                                now.day), proxies=cfg['proxy']).text
     if sacour_text:
         sacour_soup = BeautifulSoup(sacour_text)
         for url in sacour_soup.stripped_strings:
@@ -258,21 +253,19 @@ def main():
             for a in t.find_all("a"):
                 push_malware_url(a['title'], malq)
 
-    cleanmx_text = requests.get('http://support.clean-mx.de/clean-mx/xmlviruses.php?', proxies=cfg['proxy']).text
-    if cleanmx_text:
-        cleanmx_xml = etree.parse(cleanmx_text)
-        for line in cleanmx_xml.xpath("//url"):
-            url = re.sub('&amp;', '&', line.text)
+    cleanmx_feed = feedparser.parse('http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64')
+    for entry in cleanmx_feed.entries:
+        push_malware_url(entry.title, malq)
+
+    joxean_text = requests.get('http://malwareurls.joxeankoret.com/normal.txt',
+                               proxies=cfg['proxy']).text
+    joxean_lines = joxean_text.splitlines()
+    for url in joxean_lines:
+        if not re.match("^#", url):
             push_malware_url(url, malq)
 
-    joxean_text = requests.get('http://malwareurls.joxeankoret.com/normal.txt', proxies=cfg['proxy']).text
-    if joxean_text:
-        for url in joxean_text:
-            if not re.match("^#", url):
-                push_malware_url(url, malq)
-
-    cfg['vxcage'] = args.vxcage or config.get('Maltrieve', 'vxcage')
-    cfg['cuckoo'] = args.cuckoo or config.get('Maltrieve', 'cuckoo')
+    cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
+    cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
     cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
 
     malq.join()

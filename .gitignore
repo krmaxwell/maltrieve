@@ -41,3 +41,6 @@ stash
 
 # virtualenv
 venv
+
+# debug data
+maltrieve.out
