@@ -44,9 +44,12 @@ def get_malware(q, dumpdir):
         logging.info("%s items remaining in queue", q.qsize())
         try:
             logging.info("Requesting %s" % url)
-            mal_req = requests.get(url, proxies=cfg['proxy'])
+            mal_req = requests.get(url, proxies=cfg['proxy'], timeout=10)
         except requests.ConnectionError as e:
             logging.info("Could not connect to %s: %s" % (url, e))
+            break
+        except requests.Timeout as e:
+            logging.info("Timeout waiting for %s: %s" % (url, e))
             break
         mal = mal_req.content
         if mal:
