@@ -34,7 +34,7 @@ import ConfigParser
 
 from threading import Thread
 from Queue import Queue
-from bs4 import BeautifulSoup, UnicodeDammit
+from bs4 import BeautifulSoup
 
 
 def get_malware(q, dumpdir):
@@ -67,6 +67,7 @@ def get_malware(q, dumpdir):
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
                     f.write(mal)
                     logging.info("Stored %s in %s", md5, dumpdir)
+                    print "URL %s stored as %s" % (url, md5)
                 if 'vxcage' in cfg:
                     store_vxcage(os.path.join(dumpdir, md5))
                 if 'cuckoo' in cfg:
@@ -84,7 +85,8 @@ def store_vxcage(filepath):
             # Note that this request does NOT go through proxies
             response = requests.post(url, headers=headers, files=files)
             response_data = response.json()
-            logging.info("Submitted %s to VxCage, response was %s", md5, response_data["message"])
+            logging.info("Submitted %s to VxCage, response was %s" % (os.path.basename(filepath),
+                         response_data["message"]))
             logging.info("Deleting file as it has been uploaded to VxCage")
             try:
                 os.remove(filepath)
