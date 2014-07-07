@@ -34,8 +34,7 @@ import ConfigParser
 
 from threading import Thread
 from Queue import Queue
-from lxml import etree
-from bs4 import BeautifulSoup, UnicodeDammit
+from bs4 import BeautifulSoup
 
 
 def get_malware(q, dumpdir):
@@ -44,16 +43,19 @@ def get_malware(q, dumpdir):
         logging.info("Fetched URL %s from queue", url)
         logging.info("%s items remaining in queue", q.qsize())
         try:
-            mal_req = requests.get(url, proxies=cfg['proxy'])
+            logging.info("Requesting %s" % url)
+            mal_req = requests.get(url, proxies=cfg['proxy'], timeout=10)
         except requests.ConnectionError as e:
             logging.info("Could not connect to %s: %s" % (url, e))
             break
+        except requests.Timeout as e:
+            logging.info("Timeout waiting for %s: %s" % (url, e))
+            break
         mal = mal_req.content
         if mal:
-            # REVIEW: Is this a big race condition problem?
             # TODO: store these in the JSON DB
             if 'logheaders' in cfg:
-                logging.info(mal_req.headers)
+                logging.info("Returned headers for %s: %r" % (url, mal_req.headers))
             md5 = hashlib.md5(mal).hexdigest()
             # Is this a big race condition problem?
             if md5 not in hashes:
@@ -68,6 +70,7 @@ def get_malware(q, dumpdir):
                 with open(os.path.join(dumpdir, md5), 'wb') as f:
                     f.write(mal)
                     logging.info("Stored %s in %s", md5, dumpdir)
+                    print "URL %s stored as %s" % (url, md5)
                 if 'vxcage' in cfg:
                     store_vxcage(os.path.join(dumpdir, md5))
                 if 'cuckoo' in cfg:
@@ -85,7 +88,8 @@ def store_vxcage(filepath):
             # Note that this request does NOT go through proxies
             response = requests.post(url, headers=headers, files=files)
             response_data = response.json()
-            logging.info("Submitted %s to VxCage, response was %s", md5, response_data["message"])
+            logging.info("Submitted %s to VxCage, response was %s" % (os.path.basename(filepath),
+                         response_data["message"]))
             logging.info("Deleting file as it has been uploaded to VxCage")
             try:
                 os.remove(filepath)
@@ -253,6 +257,7 @@ def main():
             for a in t.find_all("a"):
                 push_malware_url(a['title'], malq)
 
+    # TODO: this doesn't use proxies
     cleanmx_feed = feedparser.parse('http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64')
     for entry in cleanmx_feed.entries:
         push_malware_url(entry.title, malq)
