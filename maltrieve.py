@@ -73,9 +73,24 @@ def upload_cuckoo(filepath):
             logging.info("Exception caught from Cuckoo")
 
 
-def upload_viper(response):
-    # not yet implemented
-    pass
+def upload_viper(filepath, source_url):
+    if os.path.exists(filepath):
+        files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
+        url = 'http://localhost:8080/file/add'
+        headers = {'User-agent': 'Maltrieve'}
+        try:
+            # Note that this request does NOT go through proxies
+            response = requests.post(url, headers=headers, files=files)
+            response_data = response.json()
+            logging.info("Submitted %s to Viper, response was %s" % (os.path.basename(filepath),
+                         response_data["message"]))
+            logging.info("Deleting file as it has been uploaded to Viper")
+            try:
+                os.remove(filepath)
+            except:
+                logging.info("Exception when attempting to delete file: %s", filepath)
+        except:
+            logging.info("Exception caught from Viper")
 
 
 def save_malware(response, directory):
