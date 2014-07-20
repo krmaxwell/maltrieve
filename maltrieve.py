@@ -131,12 +131,12 @@ def process_xml_list_desc(response):
 
 def process_xml_list_title(response):
     feed = feedparser.parse(response)
-    urls = set([entry.title for entry in feed.entries])
+    urls = set([re.sub('&amp;', '&', entry.title) for entry in feed.entries])
     return urls
 
 
 def process_simple_list(response):
-    urls = set([line.strip() for line in response.split('\n') if line.startswith('http')])
+    urls = set([re.sub('&amp;', '&', line.strip()) for line in response.split('\n') if line.startswith('http')])
     return urls
 
 
@@ -145,7 +145,7 @@ def process_urlquery(response):
     urls = set()
     for t in soup.find_all("table", class_="test"):
         for a in t.find_all("a"):
-          urls.add('http://'+a.text)
+          urls.add('http://'+re.sub('&amp;', '&', a.text))
     return urls
 
 
