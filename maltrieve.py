@@ -39,7 +39,7 @@ from bs4 import BeautifulSoup
 
 
 # TODO: use response, not filepath
-def upload_vxcage(response):
+def upload_vxcage(filepath):
     if os.path.exists(filepath):
         files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
         url = 'http://localhost:8080/malware/add'
@@ -60,7 +60,7 @@ def upload_vxcage(response):
 
 
 # TODO: use response, not filepath
-def upload_cuckoo(response):
+def upload_cuckoo(filepath):
     if os.path.exists(filepath):
         files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
         url = 'http://localhost:8090/tasks/create/file'
@@ -76,6 +76,21 @@ def upload_cuckoo(response):
 def upload_viper(response):
     # not yet implemented
     pass
+
+
+def save_malware(response, directory):
+    url = response.url
+    data = response.content
+    md5 = hashlib.md5(mal).hexdigest()
+    if not os.path.isdir(directory):
+        try:
+            os.makedirs(dumpdir)
+        except OSError as exception:
+            if exception.errno != errno.EEXIST:
+                raise
+    with open(os.path.join(directory, md5), 'wb') as f:
+        f.write(data)
+    return md5
 
 
 def process_xml_list_desc(response):
@@ -229,15 +244,15 @@ def main():
     malware_downloads = grequests.map(reqs)
 
     for each in malware_downloads:
-        if each[1] != 200:
+        if each.status_code != 200:
             continue
+        md5 = save_malware(each, cfg['dumpdir'])
         if 'vxcage' in cfg:
-            upload_vxcage(each)
+            upload_vxcage(md5)
         if 'cuckoo' in cfg:
-            upload_cuckoo(each)
+            upload_cuckoo(md5)
         if 'viper' in cfg:
             upload_viper(each)
-        save_malware(each, cfg['dumpdir'])
         pasturls += each[0]
 
     if past_urls:
