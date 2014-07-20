@@ -97,6 +97,7 @@ def save_malware(response, directory):
     url = response.url
     data = response.content
     md5 = hashlib.md5(mal).hexdigest()
+    logging.info("%s hashes to %s" % (url, md5))
     if not os.path.isdir(directory):
         try:
             os.makedirs(dumpdir)
@@ -105,6 +106,7 @@ def save_malware(response, directory):
                 raise
     with open(os.path.join(directory, md5), 'wb') as f:
         f.write(data)
+        logging.info("Saved %s" % md5)
     return md5
 
 
@@ -134,7 +136,7 @@ def process_xml_list_title(response):
 
 
 def process_simple_list(response):
-    urls = set([line.strip() for line in data[2]['Body'].split('\n') if line.startswith('http')])
+    urls = set([line.strip() for line in response.split('\n') if line.startswith('http')])
     return urls
 
 
@@ -234,7 +236,7 @@ def main():
             past_urls = pickle.load(urlfile)
 
     source_urls = {'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
-                   'http://malc0de.com/rss': process_xml_list_desc,
+                   'http://malc0de.com/rss/': process_xml_list_desc,
                    # 'http://www.malwareblacklist.com/mbl.xml',   # removed for now
                    'http://vxvault.siri-urz.net/URL_List.php': process_simple_list,
                    'http://urlquery.net/': process_urlquery,
@@ -242,7 +244,7 @@ def main():
                    'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list}
     headers = {'User-Agent': 'maltrieve'}
 
-    reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in source_urls]
+    reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg['proxy']) for url in source_urls]
     source_lists = grequests.map(reqs)
 
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
@@ -251,7 +253,7 @@ def main():
 
     malware_urls = set()
     for response in source_lists:
-        if response.status_code == 200:
+        if hasattr(response, 'status_code') and response.status_code == 200:
             malware_urls.update(source_urls[response.url](response.text))
 
     malware_urls -= past_urls
