@@ -196,11 +196,9 @@ def main():
                    'http://malc0de.com/rss': process_xml_list,
                    # 'http://www.malwareblacklist.com/mbl.xml',   # removed for now
                    'http://vxvault.siri-urz.net/URL_List.php': process_simple_list,
-                   'http://www.sacour.cn/list/%d-%d/%d%d%d.htm' % \
-                           (now.year, now.month, now.year, now.month, now.day): process_simple_list,
                    'http://urlquery.net/': process_url_query,
                    'http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64': process_xml_list,
-                   'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list]
+                   'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list}
     headers = {'User-Agent': 'maltrieve'}
 
     reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in source_urls]
@@ -211,11 +209,9 @@ def main():
     cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
 
     malware_urls = set()
-    for each in source_lists:
-        if each[1] == 200:
-            url = each[0]
-            response = each[2]
-            malware_urls.update(source_urls[url](response))
+    for response in source_lists:
+        if response.status_code == 200:
+            malware_urls.update(source_urls[response.url](response.text))
 
     malware_urls -= past_urls
     reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in malware_urls]
