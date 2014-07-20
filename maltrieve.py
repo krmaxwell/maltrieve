@@ -78,32 +78,43 @@ def upload_viper(response):
     pass
 
 
-def process_xml_list(response)
-
-    feed = feedparser.parse(response[2])
+def process_xml_list_desc(response):
+    feed = feedparser.parse(response)
     urls = set()
 
     for entry in feed.entries:
         desc = entry.description
         url = desc.split(' ')[1].rstrip(',')
+        if url == '':
+            continue
         if url == '-':
             url = desc.split(' ')[4].rstrip(',')
         url = re.sub('&amp;', '&', url)
         if not re.match('http', url):
             url = 'http://' + url
-        urls += url
+        urls.add(url)
 
+    return urls
+
+
+def process_xml_list_title(response):
+    feed = feedparser.parse(response)
+    urls = set([entry.title for entry in feed.entries])
     return urls
 
 
 def process_simple_list(response):
-    urls = set([line if line.startswith('http') for line in response.split('\n')])
+    urls = set([line.strip() for line in data[2]['Body'].split('\n') if line.startswith('http')])
     return urls
 
 
 def process_urlquery(response):
-    # not yet implemented
-    pass
+    soup = BeautifulSoup(response)
+    urls = set()
+    for t in soup.find_all("table", class_="test"):
+        for a in t.find_all("a"):
+          urls.add('http://'+a.text)
+    return urls
 
 
 def main():
@@ -192,12 +203,12 @@ def main():
         with open('urls.obj', 'rb') as urlfile:
             past_urls = pickle.load(urlfile)
 
-    source_urls = {'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list,
-                   'http://malc0de.com/rss': process_xml_list,
+    source_urls = {'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
+                   'http://malc0de.com/rss': process_xml_list_desc,
                    # 'http://www.malwareblacklist.com/mbl.xml',   # removed for now
                    'http://vxvault.siri-urz.net/URL_List.php': process_simple_list,
-                   'http://urlquery.net/': process_url_query,
-                   'http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64': process_xml_list,
+                   'http://urlquery.net/': process_urlquery,
+                   'http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64': process_xml_list_title,
                    'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list}
     headers = {'User-Agent': 'maltrieve'}
 
