@@ -145,7 +145,7 @@ def process_urlquery(response):
     urls = set()
     for t in soup.find_all("table", class_="test"):
         for a in t.find_all("a"):
-          urls.add('http://'+re.sub('&amp;', '&', a.text))
+            urls.add('http://'+re.sub('&amp;', '&', a.text))
     return urls
 
 
@@ -247,6 +247,8 @@ def main():
     reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg['proxy']) for url in source_urls]
     source_lists = grequests.map(reqs)
 
+    print "Completed source processing"
+
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
     cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
@@ -259,6 +261,8 @@ def main():
     malware_urls -= past_urls
     reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in malware_urls]
     malware_downloads = grequests.map(reqs)
+
+    print "Completed downloads"
 
     for each in malware_downloads:
         if each.status_code != 200:
