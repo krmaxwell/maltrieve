@@ -93,10 +93,14 @@ def upload_viper(filepath, source_url):
             logging.info("Exception caught from Viper")
 
 
+def exception_handler(request, exception):
+    logging.info("Request for %s failed: %s" % (request, exception)
+
+
 def save_malware(response, directory):
     url = response.url
     data = response.content
-    md5 = hashlib.md5(mal).hexdigest()
+    md5 = hashlib.md5(data).hexdigest()
     logging.info("%s hashes to %s" % (url, md5))
     if not os.path.isdir(directory):
         try:
@@ -260,7 +264,7 @@ def main():
 
     malware_urls -= past_urls
     reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in malware_urls]
-    malware_downloads = grequests.map(reqs)
+    malware_downloads = grequests.map(reqs, size=32, exception_handler=exception_handler)
 
     print "Completed downloads"
 
