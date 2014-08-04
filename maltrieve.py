@@ -50,7 +50,7 @@ def upload_vxcage(filepath):
             response_data = response.json()
             logging.info("Submitted %s to VxCage, response was %s" % (os.path.basename(filepath),
                          response_data["message"]))
-            logging.info("Deleting file as it has been uploaded to VxCage")
+            logging.info("Deleting file %s as it has been uploaded to VxCage" % filepath)
             try:
                 os.remove(filepath)
             except:
@@ -93,8 +93,9 @@ def upload_viper(filepath, source_url):
             logging.info("Exception caught from Viper")
 
 
+
 def exception_handler(request, exception):
-    logging.info("Request for %s failed: %s" % (request, exception)
+    logging.info("Request for %s failed: %s" % (request, exception))
 
 
 def save_malware(response, directory):
