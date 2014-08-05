@@ -154,6 +154,10 @@ def process_urlquery(response):
     return urls
 
 
+def chunker(seq, size):
+    return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
+
+
 def main():
     global hashes
     hashes = set()
@@ -265,21 +269,22 @@ def main():
 
     malware_urls -= past_urls
     reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in malware_urls]
-    malware_downloads = grequests.map(reqs, size=32, exception_handler=exception_handler)
+    for chunk in chunker(reqs, 32):
+        malware_downloads = grequests.map(chunk)
+        for each in malware_downloads:
+            if each.status_code != 200:
+                continue
+            md5 = save_malware(each, cfg['dumpdir'])
+            if 'vxcage' in cfg:
+                upload_vxcage(md5)
+            if 'cuckoo' in cfg:
+                upload_cuckoo(md5)
+            if 'viper' in cfg:
+                upload_viper(each)
+            past_urls.add(each[0])
+
 
     print "Completed downloads"
-
-    for each in malware_downloads:
-        if each.status_code != 200:
-            continue
-        md5 = save_malware(each, cfg['dumpdir'])
-        if 'vxcage' in cfg:
-            upload_vxcage(md5)
-        if 'cuckoo' in cfg:
-            upload_cuckoo(md5)
-        if 'viper' in cfg:
-            upload_viper(each)
-        pasturls += each[0]
 
     if past_urls:
         logging.info('Dumping past URLs to file')
