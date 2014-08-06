@@ -272,7 +272,7 @@ def main():
     for chunk in chunker(reqs, 32):
         malware_downloads = grequests.map(chunk)
         for each in malware_downloads:
-            if each.status_code != 200:
+            if not each or each.status_code != 200:
                 continue
             md5 = save_malware(each, cfg['dumpdir'])
             if 'vxcage' in cfg:
@@ -281,7 +281,7 @@ def main():
                 upload_cuckoo(md5)
             if 'viper' in cfg:
                 upload_viper(each)
-            past_urls.add(each[0])
+            past_urls.add(each.url)
 
 
     print "Completed downloads"
