@@ -30,12 +30,40 @@ Other improvements include:
 * [VxCage](https://github.com/botherder/vxcage) and [Cuckoo Sandbox](http://www.cuckoosandbox.org) support
 
 
-## Dependencies
+## Installation
+
+Maltrieve requires the following dependencies:
 
 * Python 2 (2.6 should be sufficient)
 * [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/) version 4
 * [feedparser](https://pypi.python.org/pypi/feedparser)
 * [Requests](http://www.python-requests.org)
+
+These can all be found in [requirements.txt](./requirements.txt). These can be installed locally using ```sudo pip install -r requirements.txt```.
+
+## Usage
+
+__Basic execution:__ ```python maltrieve.py```
+
+### Options
+```
+usage: maltrieve.py [-h] [-p PROXY] [-d DUMPDIR] [-l LOGFILE] [-x] [-c]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PROXY, --proxy PROXY
+                        Define HTTP proxy as address:port
+  -d DUMPDIR, --dumpdir DUMPDIR
+                        Define dump directory for retrieved files
+  -l LOGFILE, --logfile LOGFILE
+                        Define file for logging progress
+  -x, --vxcage          Dump the file to a VxCage instance running on the
+                        localhost
+  -c, --cuckoo          Enable cuckoo analysis
+```
+
+### Configuration File
+Many of Maltrieve's command line options can be specified in ```maltrieve.cfg```.
 
 
 ## License
