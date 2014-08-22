@@ -39,7 +39,7 @@ Maltrieve requires the following dependencies:
 * [feedparser](https://pypi.python.org/pypi/feedparser)
 * [Requests](http://www.python-requests.org)
 
-These can all be found in [requirements.txt](./requirements.txt). These can be installed locally using ```sudo pip install -r requirements.txt```.
+These can all be found in [requirements.txt](./requirements.txt). These can be installed locally using ```pip install -r requirements.txt```. You may need to prepend that with ```sudo``` if not running in a virtual environment.
 
 ## Usage
 
