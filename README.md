@@ -1,12 +1,11 @@
 ```
- _______ _______        _______  ______ _____ _______ _    _ _______     
- |  |  | |_____| |         |    |_____/   |   |______  \  /  |______     
- |  |  | |     | |_____    |    |    \_ __|__ |______   \/   |______     
-                                                                         
+ _______ _______        _______  ______ _____ _______ _    _ _______
+ |  |  | |_____| |         |    |_____/   |   |______  \  /  |______
+ |  |  | |     | |_____    |    |    \_ __|__ |______   \/   |______
+
 ```
 
-Maltrieve
-=========
+## Maltrieve
 
 Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mwcrawler). It retrieves malware directly from the sources as listed at a number of sites, including:
 
@@ -21,7 +20,6 @@ These lists will be implemented if/when they return to activity.
 
 * [NovCon Minotaur](http://minotauranalysis.com/malwarelist-urls.aspx)
 
-
 Other improvements include:
 
 * Proxy support
@@ -31,24 +29,26 @@ Other improvements include:
 * Better error handling
 * [VxCage](https://github.com/botherder/vxcage) and [Cuckoo Sandbox](http://www.cuckoosandbox.org) support
 
-Dependencies
-------------
+
+## Dependencies
+
 * Python 2 (2.6 should be sufficient)
 * [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/) version 4
 * [feedparser](https://pypi.python.org/pypi/feedparser)
 * [Requests](http://www.python-requests.org)
 
-License
--------
-Released under GPL version 3. See the LICENSE file for full details.
 
-Known bugs
-----------
+## License
+
+Released under GPL version 3. See the [LICENSE](./LICENSE) file for full details.
+
+
+## Known bugs
 
 We list all the bugs we know about (plus some things we know we need to add) at the [Github issues](https://github.com/technoskald/maltrieve/issues) page.
 
-How you can help
-----------------
+
+## How you can help
 
 Aside from pull requests, non-developers can open issues on [Github](https://github.com/technoskald/maltrieve). Things we'd really appreciate:
 
@@ -56,4 +56,4 @@ Aside from pull requests, non-developers can open issues on [Github](https://git
 * Suggestions of additional sources for malware lists
 * Descriptions of how you use it and ways we can improve it for you
 
-If you'd prefer not to open an issue, you can [contact me on Twitter](https://twitter.com/kylemaxwell) or [email](mailto:krmaxwell@gmail.com).
+Check the [contributing guide](./CONTRIBUTING.md) for details. If you'd prefer not to open an issue, you can [contact me on Twitter](https://twitter.com/kylemaxwell) or [email](mailto:krmaxwell@gmail.com).
