@@ -206,6 +206,11 @@ def main():
     else:
         cfg['proxy'] = None
 
+    if config_has_option('Maltrieve', 'User-Agent'):
+        cfg['User-Agent'] = {'User-Agent': config.get('Maltrieve', 'User-Agent')}
+    else:
+        cfg['User-Agent'] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
+
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
         my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
@@ -251,7 +256,7 @@ def main():
                    'http://urlquery.net/': process_urlquery,
                    'http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64': process_xml_list_title,
                    'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list}
-    headers = {'User-Agent': 'maltrieve'}
+    headers = {'User-Agent': cfg['User-Agent']}
 
     reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg['proxy']) for url in source_urls]
     source_lists = grequests.map(reqs)
