@@ -205,7 +205,7 @@ def main():
     else:
         cfg['proxy'] = None
 
-    if config_has_option('Maltrieve', 'User-Agent'):
+    if config.has_option('Maltrieve', 'User-Agent'):
         cfg['User-Agent'] = {'User-Agent': config.get('Maltrieve', 'User-Agent')}
     else:
         cfg['User-Agent'] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
