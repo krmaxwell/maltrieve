@@ -93,7 +93,6 @@ def upload_viper(filepath, source_url):
             logging.info("Exception caught from Viper")
 
 
-
 def exception_handler(request, exception):
     logging.info("Request for %s failed: %s" % (request, exception))
 
@@ -287,7 +286,6 @@ def main():
             if 'viper' in cfg:
                 upload_viper(each)
             past_urls.add(each.url)
-
 
     print "Completed downloads"
 
