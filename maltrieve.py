@@ -255,7 +255,7 @@ def main():
                    'http://urlquery.net/': process_urlquery,
                    'http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64': process_xml_list_title,
                    'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list}
-    headers = {'User-Agent': cfg['User-Agent']}
+    headers = {'User-Agent': 'Maltrieve'}
 
     reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg['proxy']) for url in source_urls]
     source_lists = grequests.map(reqs)
@@ -265,6 +265,7 @@ def main():
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
     cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
+    headers['User-Agent'] = cfg['User-Agent']
 
     malware_urls = set()
     for response in source_lists:
