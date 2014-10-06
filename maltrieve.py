@@ -32,6 +32,7 @@ import requests
 import tempfile
 import sys
 import ConfigParser
+import magic
 
 from threading import Thread
 from Queue import Queue
@@ -97,9 +98,13 @@ def exception_handler(request, exception):
     logging.info("Request for %s failed: %s" % (request, exception))
 
 
-def save_malware(response, directory):
+def save_malware(response, directory, ignore_list):
     url = response.url
     data = response.content
+    mime_type = magic.from_buffer(data, mime=True)
+    if mime_type in ignore_list:
+        logging.info('%s in ignore list for %s', mime_type, url)
+        return
     md5 = hashlib.md5(data).hexdigest()
     logging.info("%s hashes to %s" % (url, md5))
     if not os.path.isdir(directory):
@@ -269,8 +274,12 @@ def main():
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
     cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
+    
+    ignore_list = []
+    if config.has_option('Maltrieve', 'mime_block'):
+        ignore_list = config.get('Maltrieve', 'mime_block').split(',')
+        
     headers['User-Agent'] = cfg['User-Agent']
-
     malware_urls = set()
     for response in source_lists:
         if hasattr(response, 'status_code') and response.status_code == 200:
@@ -283,7 +292,9 @@ def main():
         for each in malware_downloads:
             if not each or each.status_code != 200:
                 continue
-            md5 = save_malware(each, cfg['dumpdir'])
+            md5 = save_malware(each, cfg['dumpdir'], ignore_list)
+            if not md5:
+                continue
             if 'vxcage' in cfg:
                 upload_vxcage(md5)
             if 'cuckoo' in cfg:
