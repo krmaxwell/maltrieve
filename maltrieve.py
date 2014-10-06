@@ -223,6 +223,10 @@ def main():
     else:
         cfg['dumpdir'] = '/tmp/malware'
 
+    # Create the dir
+    if not os.path.exists(cfg['dumpdir']):
+        os.makedirs(cfg['dumpdir'])
+    
     try:
         d = tempfile.mkdtemp(dir=cfg['dumpdir'])
     except Exception as e:
