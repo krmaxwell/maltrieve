@@ -38,6 +38,7 @@ Maltrieve requires the following dependencies:
 * [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/) version 4
 * [feedparser](https://pypi.python.org/pypi/feedparser)
 * [Requests](http://www.python-requests.org)
+* [filemagic](https://pypi.python.org/pypi/filemagic)
 
 These can all be found in [requirements.txt](./requirements.txt). These can be installed locally using ```pip install -r requirements.txt```. You may need to prepend that with ```sudo``` if not running in a virtual environment.
 
