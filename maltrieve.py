@@ -94,7 +94,6 @@ def upload_viper(filepath, source_url):
             logging.info("Exception caught from Viper")
 
 
-
 def exception_handler(request, exception):
     logging.info("Request for %s failed: %s" % (request, exception))
 
@@ -211,6 +210,11 @@ def main():
     else:
         cfg['proxy'] = None
 
+    if config.has_option('Maltrieve', 'User-Agent'):
+        cfg['User-Agent'] = {'User-Agent': config.get('Maltrieve', 'User-Agent')}
+    else:
+        cfg['User-Agent'] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
+
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
         my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
@@ -224,6 +228,10 @@ def main():
     else:
         cfg['dumpdir'] = '/tmp/malware'
 
+    # Create the dir
+    if not os.path.exists(cfg['dumpdir']):
+        os.makedirs(cfg['dumpdir'])
+    
     try:
         d = tempfile.mkdtemp(dir=cfg['dumpdir'])
     except Exception as e:
@@ -256,7 +264,7 @@ def main():
                    'http://urlquery.net/': process_urlquery,
                    'http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64': process_xml_list_title,
                    'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list}
-    headers = {'User-Agent': 'maltrieve'}
+    headers = {'User-Agent': 'Maltrieve'}
 
     reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg['proxy']) for url in source_urls]
     source_lists = grequests.map(reqs)
@@ -271,7 +279,7 @@ def main():
     if config.has_option('Maltrieve', 'mime_block'):
         ignore_list = config.get('Maltrieve', 'mime_block').split(',')
         
-    
+    headers['User-Agent'] = cfg['User-Agent']
     malware_urls = set()
     for response in source_lists:
         if hasattr(response, 'status_code') and response.status_code == 200:
@@ -294,7 +302,6 @@ def main():
             if 'viper' in cfg:
                 upload_viper(each)
             past_urls.add(each.url)
-
 
     print "Completed downloads"
 
