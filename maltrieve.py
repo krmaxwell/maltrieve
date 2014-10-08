@@ -34,62 +34,56 @@ import sys
 import ConfigParser
 import magic
 
+from urlparse import urlparse
 from threading import Thread
 from Queue import Queue
 from bs4 import BeautifulSoup
 
 
-# TODO: use response, not filepath
-def upload_vxcage(filepath):
-    if os.path.exists(filepath):
-        files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
-        url = 'http://localhost:8080/malware/add'
+def upload_vxcage(response, md5):
+    if response:
+        url_tag = urlparse(response.url)
+        files = {'file': (md5, response.content)}
+        tags = {'tags':url_tag.netloc+',Maltrieve'}
+        url = "{0}/malware/add".format(config.get('Maltrieve', 'vxcage'))
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
-            response = requests.post(url, headers=headers, files=files)
+            response = requests.post(url, headers=headers, files=files, data=tags)
             response_data = response.json()
-            logging.info("Submitted %s to VxCage, response was %s" % (os.path.basename(filepath),
+            logging.info("Submitted %s to VxCage, response was %s" % (md5,
                          response_data["message"]))
-            logging.info("Deleting file %s as it has been uploaded to VxCage" % filepath)
-            try:
-                os.remove(filepath)
-            except:
-                logging.info("Exception when attempting to delete file: %s", filepath)
         except:
             logging.info("Exception caught from VxCage")
 
 
-# TODO: use response, not filepath
-def upload_cuckoo(filepath):
-    if os.path.exists(filepath):
-        files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
-        url = 'http://localhost:8090/tasks/create/file'
+# This gives cuckoo the URL instead of the file.
+def upload_cuckoo(response, md5):
+    if response:
+        data = {'url': response.url}
+        url = "{0}/tasks/create/url".format(config.get('Maltrieve', 'cuckoo'))
         headers = {'User-agent': 'Maltrieve'}
-        try:
-            response = requests.post(url, headers=headers, files=files)
-            response_data = response.json()
-            logging.info("Submitted %s to cuckoo, task ID %s", filepath, response_data["task_id"])
-        except:
-            logging.info("Exception caught from Cuckoo")
+        #try:
+        response = requests.post(url, headers=headers, data=data)
+        response_data = response.json()
+        logging.info("Submitted %s to Cuckoo, task ID %s", md5, response_data["task_id"])
+        #except:
+            #logging.info("Exception caught from Cuckoo")
 
 
-def upload_viper(filepath, source_url):
-    if os.path.exists(filepath):
-        files = {'file': (os.path.basename(filepath), open(filepath, 'rb'))}
-        url = 'http://localhost:8080/file/add'
+def upload_viper(response, md5):
+    if response:
+        url_tag = urlparse(response.url)
+        files = {'file': (md5, response.content)}
+        tags = {'tags':url_tag.netloc+',Maltrieve'}
+        url = "{0}/file/add".format(config.get('Maltrieve', 'viper'))
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
-            response = requests.post(url, headers=headers, files=files)
+            response = requests.post(url, headers=headers, files=files, data=tags)
             response_data = response.json()
-            logging.info("Submitted %s to Viper, response was %s" % (os.path.basename(filepath),
+            logging.info("Submitted %s to Viper, response was %s" % (md5,
                          response_data["message"]))
-            logging.info("Deleting file as it has been uploaded to Viper")
-            try:
-                os.remove(filepath)
-            except:
-                logging.info("Exception when attempting to delete file: %s", filepath)
         except:
             logging.info("Exception caught from Viper")
 
@@ -98,25 +92,41 @@ def exception_handler(request, exception):
     logging.info("Request for %s failed: %s" % (request, exception))
 
 
-def save_malware(response, directory, ignore_list):
+def save_malware(response, directory, black_list, white_list):
     url = response.url
     data = response.content
     mime_type = magic.from_buffer(data, mime=True)
-    if mime_type in ignore_list:
+    if mime_type in black_list:
         logging.info('%s in ignore list for %s', mime_type, url)
         return
+    if white_list:
+        if mime_type in white_list:
+            pass
+        else:
+            logging.info('%s not in whitelist for %s', mime_type, url)
+            return
+        
+    # Hash and log
     md5 = hashlib.md5(data).hexdigest()
     logging.info("%s hashes to %s" % (url, md5))
-    if not os.path.isdir(directory):
-        try:
-            os.makedirs(dumpdir)
-        except OSError as exception:
-            if exception.errno != errno.EEXIST:
-                raise
-    with open(os.path.join(directory, md5), 'wb') as f:
-        f.write(data)
-        logging.info("Saved %s" % md5)
-    return md5
+    
+    # Assume that if viper or vxcage then we dont need to write to file as well.
+    stored = False
+    # Submit to external services
+    if cfg['vxcage']:
+        upload_vxcage(response, md5)
+        stored = True
+    if cfg['cuckoo']:
+        upload_cuckoo(response, md5)
+    if cfg['viper']:
+        upload_viper(response, md5)
+        stored = True
+    # else save to disk
+    if not stored:
+        with open(os.path.join(directory, md5), 'wb') as f:
+            f.write(data)
+            logging.info("Saved %s to Dump Dir" % md5)
+    return True
 
 
 def process_xml_list_desc(response):
@@ -177,10 +187,13 @@ def main():
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
     parser.add_argument("-x", "--vxcage",
-                        help="Dump the file to a VxCage instance running on the localhost",
-                        action="store_true")
+                        help="Dump the file to a VxCage instance",
+                        action="store_true", default=False)
+    parser.add_argument("-v", "--viper",
+                        help="Dump the file to a Viper instance",
+                        action="store_true", default=False)
     parser.add_argument("-c", "--cuckoo",
-                        help="Enable cuckoo analysis", action="store_true")
+                        help="Enable cuckoo analysis", action="store_true", default=False)
 
     global cfg
     cfg = dict()
@@ -219,7 +232,20 @@ def main():
         logging.info('Using proxy %s', cfg['proxy'])
         my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
         logging.info('External sites see %s', my_ip)
-
+       
+    cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
+    cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
+    cfg['viper'] = args.viper or config.has_option('Maltrieve', 'viper')
+    cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
+    
+    black_list = []
+    if config.has_option('Maltrieve', 'black_list'):
+        black_list = config.get('Maltrieve', 'black_list').strip().split(',')
+    
+    white_list = False
+    if config.has_option('Maltrieve', 'white_list'):
+        white_list = config.get('Maltrieve', 'white_list').strip().split(',')
+    
     # make sure we can open the directory for writing
     if args.dumpdir:
         cfg['dumpdir'] = args.dumpdir
@@ -256,7 +282,9 @@ def main():
     elif os.path.exists('urls.obj'):
         with open('urls.obj', 'rb') as urlfile:
             past_urls = pickle.load(urlfile)
-
+            
+    print "Processing source URL's"
+    
     source_urls = {'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
                    'http://malc0de.com/rss/': process_xml_list_desc,
                    # 'http://www.malwareblacklist.com/mbl.xml',   # removed for now
@@ -270,37 +298,25 @@ def main():
     source_lists = grequests.map(reqs)
 
     print "Completed source processing"
-
-    cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
-    cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
-    cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
-    
-    ignore_list = []
-    if config.has_option('Maltrieve', 'mime_block'):
-        ignore_list = config.get('Maltrieve', 'mime_block').split(',')
-        
+       
     headers['User-Agent'] = cfg['User-Agent']
     malware_urls = set()
     for response in source_lists:
         if hasattr(response, 'status_code') and response.status_code == 200:
             malware_urls.update(source_urls[response.url](response.text))
 
+    print "Downloading Samples Check Log for details"
+    
     malware_urls -= past_urls
     reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in malware_urls]
     for chunk in chunker(reqs, 32):
         malware_downloads = grequests.map(chunk)
         for each in malware_downloads:
             if not each or each.status_code != 200:
-                continue
-            md5 = save_malware(each, cfg['dumpdir'], ignore_list)
+                continue            
+            md5 = save_malware(each, cfg['dumpdir'], black_list, white_list)
             if not md5:
                 continue
-            if 'vxcage' in cfg:
-                upload_vxcage(md5)
-            if 'cuckoo' in cfg:
-                upload_cuckoo(md5)
-            if 'viper' in cfg:
-                upload_viper(each)
             past_urls.add(each.url)
 
     print "Completed downloads"
