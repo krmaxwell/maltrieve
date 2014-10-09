@@ -44,7 +44,7 @@ def upload_vxcage(response, md5):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
-        tags = {'tags':url_tag.netloc+',Maltrieve'}
+        tags = {'tags':url_tag.netloc + ',Maltrieve'}
         url = "{0}/malware/add".format(config.get('Maltrieve', 'vxcage'))
         headers = {'User-agent': 'Maltrieve'}
         try:
@@ -75,7 +75,7 @@ def upload_viper(response, md5):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
-        tags = {'tags':url_tag.netloc+',Maltrieve'}
+        tags = {'tags':url_tag.netloc + ',Maltrieve'}
         url = "{0}/file/add".format(config.get('Maltrieve', 'viper'))
         headers = {'User-agent': 'Maltrieve'}
         try:
@@ -105,11 +105,11 @@ def save_malware(response, directory, black_list, white_list):
         else:
             logging.info('%s not in whitelist for %s', mime_type, url)
             return
-        
+
     # Hash and log
     md5 = hashlib.md5(data).hexdigest()
     logging.info("%s hashes to %s" % (url, md5))
-    
+
     # Assume that if viper or vxcage then we dont need to write to file as well.
     stored = False
     # Submit to external services
@@ -125,7 +125,7 @@ def save_malware(response, directory, black_list, white_list):
     if not stored:
         with open(os.path.join(directory, md5), 'wb') as f:
             f.write(data)
-            logging.info("Saved %s to Dump Dir" % md5)
+            logging.info("Saved %s to dump dir" % md5)
     return True
 
 
@@ -164,7 +164,7 @@ def process_urlquery(response):
     urls = set()
     for t in soup.find_all("table", class_="test"):
         for a in t.find_all("a"):
-            urls.add('http://'+re.sub('&amp;', '&', a.text))
+            urls.add('http://' + re.sub('&amp;', '&', a.text))
     return urls
 
 
@@ -232,20 +232,20 @@ def main():
         logging.info('Using proxy %s', cfg['proxy'])
         my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
         logging.info('External sites see %s', my_ip)
-       
+
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
     cfg['viper'] = args.viper or config.has_option('Maltrieve', 'viper')
     cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
-    
+
     black_list = []
     if config.has_option('Maltrieve', 'black_list'):
         black_list = config.get('Maltrieve', 'black_list').strip().split(',')
-    
+
     white_list = False
     if config.has_option('Maltrieve', 'white_list'):
         white_list = config.get('Maltrieve', 'white_list').strip().split(',')
-    
+
     # make sure we can open the directory for writing
     if args.dumpdir:
         cfg['dumpdir'] = args.dumpdir
@@ -257,7 +257,7 @@ def main():
     # Create the dir
     if not os.path.exists(cfg['dumpdir']):
         os.makedirs(cfg['dumpdir'])
-    
+
     try:
         d = tempfile.mkdtemp(dir=cfg['dumpdir'])
     except Exception as e:
@@ -282,9 +282,9 @@ def main():
     elif os.path.exists('urls.obj'):
         with open('urls.obj', 'rb') as urlfile:
             past_urls = pickle.load(urlfile)
-            
-    print "Processing source URL's"
-    
+
+    print "Processing source URLs"
+
     source_urls = {'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
                    'http://malc0de.com/rss/': process_xml_list_desc,
                    # 'http://www.malwareblacklist.com/mbl.xml',   # removed for now
@@ -298,22 +298,22 @@ def main():
     source_lists = grequests.map(reqs)
 
     print "Completed source processing"
-       
+
     headers['User-Agent'] = cfg['User-Agent']
     malware_urls = set()
     for response in source_lists:
         if hasattr(response, 'status_code') and response.status_code == 200:
             malware_urls.update(source_urls[response.url](response.text))
 
-    print "Downloading Samples Check Log for details"
-    
+    print "Downloading samples, check log for details"
+
     malware_urls -= past_urls
     reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in malware_urls]
     for chunk in chunker(reqs, 32):
         malware_downloads = grequests.map(chunk)
         for each in malware_downloads:
             if not each or each.status_code != 200:
-                continue            
+                continue
             md5 = save_malware(each, cfg['dumpdir'], black_list, white_list)
             if not md5:
                 continue
