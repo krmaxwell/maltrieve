@@ -48,7 +48,7 @@ __Basic execution:__ ```python maltrieve.py```
 
 ### Options
 ```
-usage: maltrieve.py [-h] [-p PROXY] [-d DUMPDIR] [-l LOGFILE] [-x] [-c]
+usage: maltrieve.py [-h] [-p PROXY] [-d DUMPDIR] [-l LOGFILE] [-x] [-c] [-v]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -58,8 +58,8 @@ optional arguments:
                         Define dump directory for retrieved files
   -l LOGFILE, --logfile LOGFILE
                         Define file for logging progress
-  -x, --vxcage          Dump the file to a VxCage instance running on the
-                        localhost
+  -x, --vxcage          Dump the file to a VxCage instance
+  -v, --viper           Dump the file to a Viper instance
   -c, --cuckoo          Enable cuckoo analysis
 ```
 
