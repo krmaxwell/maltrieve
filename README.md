@@ -27,7 +27,7 @@ Other improvements include:
 * Logging of source URLs
 * Multiple user agent support
 * Better error handling
-* [VxCage](https://github.com/botherder/vxcage) and [Cuckoo Sandbox](http://www.cuckoosandbox.org) support
+* [VxCage](https://github.com/botherder/vxcage), * [Viper](https://github.com/botherder/viper) and [Cuckoo Sandbox](http://www.cuckoosandbox.org) support
 
 
 ## Installation
