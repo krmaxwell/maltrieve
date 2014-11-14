@@ -123,7 +123,11 @@ def save_malware(response, directory, black_list, white_list):
         stored = True
     # else save to disk
     if not stored:
-        with open(os.path.join(directory, md5), 'wb') as f:
+        # set folder per mime_type
+        sort_folder =mime_type.replace('/', '_')
+        if not os.path.exists(os.path.join(directory, sort_folder)):
+            os.makedirs(os.path.join(directory, sort_folder))
+        with open(os.path.join(directory, sort_folder, md5), 'wb') as f:
             f.write(data)
             logging.info("Saved %s to dump dir" % md5)
     return True
