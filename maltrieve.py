@@ -123,11 +123,15 @@ def save_malware(response, directory, black_list, white_list):
         stored = True
     # else save to disk
     if not stored:
-        # set folder per mime_type
-        sort_folder =mime_type.replace('/', '_')
-        if not os.path.exists(os.path.join(directory, sort_folder)):
-            os.makedirs(os.path.join(directory, sort_folder))
-        with open(os.path.join(directory, sort_folder, md5), 'wb') as f:
+        if cfg['sort_mime']:
+            # set folder per mime_type
+            sort_folder =mime_type.replace('/', '_')
+            if not os.path.exists(os.path.join(directory, sort_folder)):
+                os.makedirs(os.path.join(directory, sort_folder))
+            store_path = os.path.join(directory, sort_folder, md5)
+        else:
+            store_path = os.path.join(directory, md5)
+        with open(store_path, 'wb') as f:
             f.write(data)
             logging.info("Saved %s to dump dir" % md5)
     return True
@@ -198,7 +202,10 @@ def main():
                         action="store_true", default=False)
     parser.add_argument("-c", "--cuckoo",
                         help="Enable cuckoo analysis", action="store_true", default=False)
-
+    parser.add_argument("-s", "--sort_mime",
+                        help="Sort Files By Mime", action="store_true", default=False)
+                        
+                        
     global cfg
     cfg = dict()
     args = parser.parse_args()
@@ -231,6 +238,8 @@ def main():
         cfg['User-Agent'] = {'User-Agent': config.get('Maltrieve', 'User-Agent')}
     else:
         cfg['User-Agent'] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
+    
+    cfg['sort_mime'] = args.sort_mime
 
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
