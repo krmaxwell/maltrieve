@@ -38,6 +38,41 @@ from urlparse import urlparse
 from threading import Thread
 from Queue import Queue
 from bs4 import BeautifulSoup
+from pycrits import pycrits
+
+def upload_crits(response, md5):
+    if response:
+        url_tag = urlparse(response.url)
+        files = {'file': (md5, response.content)}
+        url = "{0}/api/v1/samples".format(config.get('Maltrieve', 'crits'))
+        headers = {'User-agent': 'Maltrieve'}
+       
+        ip_data = {
+            'api_key': cfg['crits_key'],
+            'username': cfg['crits_user'],
+            'source': cfg['crits_source'],
+            'domain': url_tag.netloc
+        }
+
+        # submit domain / IP
+        try:
+            # Note that this request does NOT go through proxies
+            response = requests.post(url, headers=headers, data=ip_data)
+            response_data = response.json()
+            logging.info("Submitted domain info for %s to Crits, response was %s" % (md5,
+                         response_data["message"]))
+        except:
+            logging.info("Exception caught from Crits")
+
+        # submit sample
+        try:
+            # Note that this request does NOT go through proxies
+            response = requests.post(url, headers=headers, files=files, data=tags)
+            response_data = response.json()
+            logging.info("Submitted sample info for %s to Crits, response was %s" % (md5,
+                         response_data["message"]))
+        except:
+            logging.info("Exception caught from Crits")
 
 
 def upload_vxcage(response, md5):
@@ -121,6 +156,9 @@ def save_malware(response, directory, black_list, white_list):
     if cfg['viper']:
         upload_viper(response, md5)
         stored = True
+    if cfg['crits']:
+        upload_crits(response, md5)
+        stored = True
     # else save to disk
     if not stored:
         with open(os.path.join(directory, md5), 'wb') as f:
@@ -186,14 +224,18 @@ def main():
                         help="Define dump directory for retrieved files")
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
-    parser.add_argument("-x", "--vxcage",
-                        help="Dump the file to a VxCage instance",
+    parser.add_arguement("-r", "--crits",
+                        help="Dump the file to a Crits instance.",
                         action="store_true", default=False)
     parser.add_argument("-v", "--viper",
                         help="Dump the file to a Viper instance",
                         action="store_true", default=False)
+    parser.add_argument("-x", "--vxcage",
+                        help="Dump the file to a VxCage instance",
+                        action="store_true", default=False)
     parser.add_argument("-c", "--cuckoo",
-                        help="Enable cuckoo analysis", action="store_true", default=False)
+                        help="Enable cuckoo analysis", 
+                        action="store_true", default=False)
 
     global cfg
     cfg = dict()
@@ -236,7 +278,14 @@ def main():
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
     cfg['viper'] = args.viper or config.has_option('Maltrieve', 'viper')
-    cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
+    cfg['logheaders'] = config.get('Maltrieve', 'logheaders') 
+
+    # See if crits is configured. If so add config options for User/API
+    cfg['crits'] = args.crits or config.has_option('Maltrieve', 'crits')
+    if cfg['crits']:
+        cfg['crits_user'] = config.get('Maltrieve', 'crits_user')
+        cfg['crits_key'] = config.get('Maltrieve', 'crits_key')
+        cfg['crits_source'] = config.get('Maltrieve', 'crits_source')
 
     black_list = []
     if config.has_option('Maltrieve', 'black_list'):
