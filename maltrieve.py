@@ -45,7 +45,7 @@ def upload_vxcage(response, md5):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
-        tags = {'tags':url_tag.netloc + ',Maltrieve'}
+        tags = {'tags': url_tag.netloc + ',Maltrieve'}
         url = "{0}/malware/add".format(config.get('Maltrieve', 'vxcage'))
         headers = {'User-agent': 'Maltrieve'}
         try:
@@ -76,7 +76,7 @@ def upload_viper(response, md5):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
-        tags = {'tags':url_tag.netloc + ',Maltrieve'}
+        tags = {'tags': url_tag.netloc + ',Maltrieve'}
         url = "{0}/file/add".format(config.get('Maltrieve', 'viper'))
         headers = {'User-agent': 'Maltrieve'}
         try:
@@ -175,7 +175,7 @@ def chunker(seq, size):
 
 def main():
     resource.setrlimit(resource.RLIMIT_NOFILE, (2048, 2048))
-    
+
     global hashes
     hashes = set()
     past_urls = set()
