@@ -285,7 +285,8 @@ def main():
 
     print "Processing source URLs"
 
-    source_urls = {'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
+    source_urls = {"https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries":process_xml_list_desc,
+        'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
                    'http://malc0de.com/rss/': process_xml_list_desc,
                    # 'http://www.malwareblacklist.com/mbl.xml',   # removed for now
                    'http://vxvault.siri-urz.net/URL_List.php': process_simple_list,
