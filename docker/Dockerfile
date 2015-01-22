@@ -36,7 +36,8 @@ RUN apt-get update && \
 WORKDIR /home
 RUN git clone https://github.com/technoskald/maltrieve.git && \
   cd maltrieve && \
-  pip install -r requirements.txt
+  pip install -r requirements.txt && \
+  chown -R maltrieve:maltrieve /home/maltrieve
 
 USER maltrieve
 ENV HOME /home/maltrieve
