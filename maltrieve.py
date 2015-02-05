@@ -44,7 +44,7 @@ def upload_vxcage(response, md5):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
-        tags = {'tags':url_tag.netloc + ',Maltrieve'}
+        tags = {'tags': url_tag.netloc + ',Maltrieve'}
         url = "{0}/malware/add".format(config.get('Maltrieve', 'vxcage'))
         headers = {'User-agent': 'Maltrieve'}
         try:
@@ -75,7 +75,7 @@ def upload_viper(response, md5):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
-        tags = {'tags':url_tag.netloc + ',Maltrieve'}
+        tags = {'tags': url_tag.netloc + ',Maltrieve'}
         url = "{0}/file/add".format(config.get('Maltrieve', 'viper'))
         headers = {'User-agent': 'Maltrieve'}
         try:
@@ -125,7 +125,7 @@ def save_malware(response, directory, black_list, white_list):
     if not stored:
         if cfg['sort_mime']:
             # set folder per mime_type
-            sort_folder =mime_type.replace('/', '_')
+            sort_folder = mime_type.replace('/', '_')
             if not os.path.exists(os.path.join(directory, sort_folder)):
                 os.makedirs(os.path.join(directory, sort_folder))
             store_path = os.path.join(directory, sort_folder, md5)
@@ -204,14 +204,13 @@ def main():
                         help="Enable cuckoo analysis", action="store_true", default=False)
     parser.add_argument("-s", "--sort_mime",
                         help="Sort Files By Mime", action="store_true", default=False)
-                        
-                        
+
     global cfg
     cfg = dict()
     args = parser.parse_args()
 
     global config
-   config = ConfigParser.ConfigParser()
+    config = ConfigParser.ConfigParser()
     config.read('maltrieve.cfg')
 
     if args.logfile or config.get('Maltrieve', 'logfile'):
@@ -238,7 +237,7 @@ def main():
         cfg['User-Agent'] = {'User-Agent': config.get('Maltrieve', 'User-Agent')}
     else:
         cfg['User-Agent'] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
-    
+
     cfg['sort_mime'] = args.sort_mime
 
     if cfg['proxy']:
@@ -298,8 +297,8 @@ def main():
 
     print "Processing source URLs"
 
-    source_urls = {"https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries":process_xml_list_desc,
-        'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
+    source_urls = {'https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries': process_xml_list_desc,
+                   'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
                    'http://malc0de.com/rss/': process_xml_list_desc,
                    # 'http://www.malwareblacklist.com/mbl.xml',   # removed for now
                    'http://vxvault.siri-urz.net/URL_List.php': process_simple_list,
