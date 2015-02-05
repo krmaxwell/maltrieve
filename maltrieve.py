@@ -211,7 +211,7 @@ def main():
     args = parser.parse_args()
 
     global config
-    config = ConfigParser.ConfigParser()
+   config = ConfigParser.ConfigParser()
     config.read('maltrieve.cfg')
 
     if args.logfile or config.get('Maltrieve', 'logfile'):
@@ -243,7 +243,7 @@ def main():
 
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
-        my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
+        my_ip = requests.get('http://whatthehellismyip.com/?ipraw', proxies=cfg['proxy']).text
         logging.info('External sites see %s', my_ip)
 
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
