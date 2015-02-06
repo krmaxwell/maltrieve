@@ -242,8 +242,9 @@ def main():
 
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
-        my_ip = requests.get('http://whatthehellismyip.com/?ipraw', proxies=cfg['proxy']).text
+        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg['proxy']).text
         logging.info('External sites see %s', my_ip)
+        print "External sites see %s" % my_ip
 
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
