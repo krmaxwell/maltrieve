@@ -13,7 +13,7 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 * [Malware Black List](http://www.malwareblacklist.com/mbl.xml)
 * [Malware Domain List](http://www.malwaredomainlist.com/hostslist/mdl.xml)
 * [VX Vault](http://vxvault.siri-urz.net/URL_List.php)
-* [URLqery](http://urlquery.net/)
+* [URLquery](http://urlquery.net/)
 * [CleanMX](http://support.clean-mx.de/clean-mx/xmlviruses.php?)
 
 These lists will be implemented if/when they return to activity.
@@ -74,7 +74,7 @@ Released under GPL version 3. See the [LICENSE](./LICENSE) file for full details
 
 ## Known bugs
 
-We list all the bugs we know about (plus some things we know we need to add) at the [Github issues](https://github.com/technoskald/maltrieve/issues) page.
+We list all the bugs we know about (plus some things we know we need to add) at the [GitHub issues](https://github.com/technoskald/maltrieve/issues) page.
 
 
 ## How you can help
