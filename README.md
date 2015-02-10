@@ -7,7 +7,7 @@
 
 ## Maltrieve
 
-Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mwcrawler). It retrieves malware directly from the sources as listed at a number of sites, including:
+Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mwcrawler). It retrieves malware directly from the sources as listed at a number of sites. Currently we crawl the following:
 
 * [Malc0de](http://malc0de.com/rss)
 * [Malware Black List](http://www.malwareblacklist.com/mbl.xml)
@@ -15,6 +15,7 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 * [VX Vault](http://vxvault.siri-urz.net/URL_List.php)
 * [URLquery](http://urlquery.net/)
 * [CleanMX](http://support.clean-mx.de/clean-mx/xmlviruses.php?)
+* [ZeusTracker](https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries)
 
 These lists will be implemented if/when they return to activity.
 
@@ -48,7 +49,7 @@ __Basic execution:__ ```python maltrieve.py```
 
 ### Options
 ```
-usage: maltrieve.py [-h] [-p PROXY] [-d DUMPDIR] [-l LOGFILE] [-x] [-c] [-v]
+usage: maltrieve.py [-h] [-p PROXY] [-d DUMPDIR] [-l LOGFILE] [-x] [-v] [-c] [-s]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -58,9 +59,11 @@ optional arguments:
                         Define dump directory for retrieved files
   -l LOGFILE, --logfile LOGFILE
                         Define file for logging progress
-  -x, --vxcage          Dump the file to a VxCage instance
-  -v, --viper           Dump the file to a Viper instance
-  -c, --cuckoo          Enable cuckoo analysis
+  -x, --vxcage          Dump the files to a VxCage instance
+  -v, --viper           Dump the files to a Viper instance
+  -c, --cuckoo          Enable Cuckoo analysis
+  -s, --sort_mime       Sort files by MIME type
+
 ```
 
 ### Configuration File
