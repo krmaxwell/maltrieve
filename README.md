@@ -34,13 +34,13 @@ Other improvements include:
 
 Maltrieve requires the following dependencies:
 
-* Python 2 (2.6 should be sufficient)
+* Python 2 plus header files (2.6 should be sufficient)
 * [BeautifulSoup](http://www.crummy.com/software/BeautifulSoup/) version 4
 * [feedparser](https://pypi.python.org/pypi/feedparser)
 * [python-magic](https://pypi.python.org/pypi/python-magic/)
 * [Requests](http://www.python-requests.org)
 
-These can all be found in [requirements.txt](./requirements.txt). These can be installed locally using ```pip install -r requirements.txt```. You may need to prepend that with ```sudo``` if not running in a virtual environment.
+With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. The rest of the requirements can be installed locally using ```pip install -r requirements.txt```. You may need to prepend that with ```sudo``` if not running in a virtual environment.
 
 ## Usage
 
