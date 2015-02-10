@@ -195,15 +195,15 @@ def main():
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
     parser.add_argument("-x", "--vxcage",
-                        help="Dump the file to a VxCage instance",
+                        help="Dump the files to a VxCage instance",
                         action="store_true", default=False)
     parser.add_argument("-v", "--viper",
-                        help="Dump the file to a Viper instance",
+                        help="Dump the files to a Viper instance",
                         action="store_true", default=False)
     parser.add_argument("-c", "--cuckoo",
-                        help="Enable cuckoo analysis", action="store_true", default=False)
+                        help="Enable Cuckoo analysis", action="store_true", default=False)
     parser.add_argument("-s", "--sort_mime",
-                        help="Sort files By MIME type", action="store_true", default=False)
+                        help="Sort files by MIME type", action="store_true", default=False)
 
     global cfg
     cfg = dict()
