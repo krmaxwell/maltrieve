@@ -203,7 +203,7 @@ def main():
     parser.add_argument("-c", "--cuckoo",
                         help="Enable cuckoo analysis", action="store_true", default=False)
     parser.add_argument("-s", "--sort_mime",
-                        help="Sort Files By Mime", action="store_true", default=False)
+                        help="Sort files By MIME type", action="store_true", default=False)
 
     global cfg
     cfg = dict()
