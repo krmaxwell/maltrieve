@@ -15,6 +15,7 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 * [VX Vault](http://vxvault.siri-urz.net/URL_List.php)
 * [URLquery](http://urlquery.net/)
 * [CleanMX](http://support.clean-mx.de/clean-mx/xmlviruses.php?)
+* [ZeusTracker](https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries)
 
 These lists will be implemented if/when they return to activity.
 
