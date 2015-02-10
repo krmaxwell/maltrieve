@@ -86,10 +86,6 @@ def upload_viper(response, md5):
             logging.info("Exception caught from Viper")
 
 
-def exception_handler(request, exception):
-    logging.info("Request for %s failed: %s" % (request, exception))
-
-
 def save_malware(response, directory, black_list, white_list):
     url = response.url
     data = response.content
