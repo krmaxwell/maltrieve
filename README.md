@@ -77,12 +77,12 @@ Released under GPL version 3. See the [LICENSE](./LICENSE) file for full details
 
 ## Known bugs
 
-We list all the bugs we know about (plus some things we know we need to add) at the [GitHub issues](https://github.com/technoskald/maltrieve/issues) page.
+We list all the bugs we know about (plus some things we know we need to add) at the [GitHub issues](https://github.com/krmaxwell/maltrieve/issues) page.
 
 
 ## How you can help
 
-Aside from pull requests, non-developers can open issues on [Github](https://github.com/technoskald/maltrieve). Things we'd really appreciate:
+Aside from pull requests, non-developers can open issues on [Github](https://github.com/krmaxwell/maltrieve). Things we'd really appreciate:
 
 * Bug reports, preferably with error logs
 * Suggestions of additional sources for malware lists
