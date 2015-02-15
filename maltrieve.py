@@ -38,48 +38,93 @@ from urlparse import urlparse
 from threading import Thread
 from Queue import Queue
 from bs4 import BeautifulSoup
-from pycrits import pycrits
 
-def upload_crits(response, md5):
+def upload_crits(response, md5, mime_type):
     if response:
         url_tag = urlparse(response.url)
-        files = {'file': (md5, response.content)}
-        url = "{0}/api/v1/samples".format(config.get('Maltrieve', 'crits'))
+        files = {'filedata': (md5, response.content)}
         headers = {'User-agent': 'Maltrieve'}
-       
-        ip_data = {
+        zip_files = ['application/zip', 'application/gzip', 'application/x-7z-compressed']
+        rar_files = ['application/x-rar-compressed']
+        domain_response_data = False
+        sample_response_data = False
+
+        # submit domain / IP
+        # TODO: identify if it is a domain or IP and submit accordingly
+        url = "{0}/api/v1/domains/".format(config.get('Maltrieve', 'crits')) 
+        domain_data = {
             'api_key': cfg['crits_key'],
             'username': cfg['crits_user'],
             'source': cfg['crits_source'],
             'domain': url_tag.netloc
         }
-
-        # submit domain / IP
         try:
             # Note that this request does NOT go through proxies
-            response = requests.post(url, headers=headers, data=ip_data)
-            response_data = response.json()
+            domain_response = requests.post(url, headers=headers, data=domain_data, verify=False)
+            domain_response_data = domain_response.json()
             logging.info("Submitted domain info for %s to Crits, response was %s" % (md5,
-                         response_data["message"]))
+                         domain_response_data["message"]))
         except:
-            logging.info("Exception caught from Crits")
+            logging.info("Exception caught from Crits when submitting domain")
 
-        # submit sample
+        # Submit sample
+        url = "{0}/api/v1/samples/".format(config.get('Maltrieve', 'crits'))
+        if mime_type in zip_files:
+            file_type = 'zip'
+        elif mime_type in rar_files:
+            file_type = 'rar'
+        else:
+            file_type = 'raw'
+        sample_data = {
+            'api_key': cfg['crits_key'],
+            'username': cfg['crits_user'],
+            'source': cfg['crits_source'],
+            'upload_type': 'file',
+            'md5': md5,
+            'file_format': file_type # must be type zip, rar, or raw
+        }
         try:
             # Note that this request does NOT go through proxies
-            response = requests.post(url, headers=headers, files=files, data=tags)
-            response_data = response.json()
+            sample_response = requests.post(url, headers=headers, files=files, data=sample_data, verify=False)
+            sample_response_data = sample_response.json()
             logging.info("Submitted sample info for %s to Crits, response was %s" % (md5,
-                         response_data["message"]))
+                         sample_response_data["message"]))
         except:
-            logging.info("Exception caught from Crits")
+            logging.info("Exception caught from Crits when submitting sample")
+
+        # Create a relationship for the sample and domain        
+        url = "{0}/api/v1/relationships/".format(config.get('Maltrieve', 'crits'))
+        if (sample_response_data['return_code'] == 0 and 
+            domain_response_data['return_code'] == 0):
+            relationship_data = {
+                'api_key': cfg['crits_key'],
+                'username': cfg['crits_user'],
+                'source': cfg['crits_source'],
+                'right_type': domain_response_data['type'],
+                'right_id': domain_response_data['id'],
+                'left_type': sample_response_data['type'],
+                'left_id': sample_response_data['id'],
+                'rel_type': 'Downloaded_From',
+                'rel_confidence': 'high',
+                'rel_date': datetime.datetime.now()
+            }
+            try:
+                # Note that this request does NOT go through proxies
+                relationship_response = requests.post(url, headers=headers, data=relationship_data, verify=False)
+                relationship_response_data = relationship_response.json()
+                logging.info("Submitted relationship info for %s to Crits, response was %s" % (md5,
+                             relationship_response_data["message"]))
+            except:
+                logging.info("Exception caught from Crits when submitting relationship")
+        else:
+            logging.info("Relationship submission skipped. \n    Domain message was %s\n    Sample message was %s" % (domain_response_data["message"], sample_response_data["message"])
 
 
 def upload_vxcage(response, md5):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
-        tags = {'tags':url_tag.netloc + ',Maltrieve'}
+        tags = {'tags': url_tag.netloc + ',Maltrieve'}
         url = "{0}/malware/add".format(config.get('Maltrieve', 'vxcage'))
         headers = {'User-agent': 'Maltrieve'}
         try:
@@ -110,7 +155,7 @@ def upload_viper(response, md5):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
-        tags = {'tags':url_tag.netloc + ',Maltrieve'}
+        tags = {'tags': url_tag.netloc + ',Maltrieve'}
         url = "{0}/file/add".format(config.get('Maltrieve', 'viper'))
         headers = {'User-agent': 'Maltrieve'}
         try:
@@ -157,7 +202,7 @@ def save_malware(response, directory, black_list, white_list):
         upload_viper(response, md5)
         stored = True
     if cfg['crits']:
-        upload_crits(response, md5)
+        upload_crits(response, md5, mime_type)
         stored = True
     # else save to disk
     if not stored:
@@ -224,7 +269,7 @@ def main():
                         help="Define dump directory for retrieved files")
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
-    parser.add_arguement("-r", "--crits",
+    parser.add_argument("-r", "--crits",
                         help="Dump the file to a Crits instance.",
                         action="store_true", default=False)
     parser.add_argument("-v", "--viper",
@@ -272,7 +317,7 @@ def main():
 
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
-        my_ip = requests.get('http://whatthehellismyip.com/?ipraw').text
+        my_ip = requests.get('http://api.ipify.org', proxies=cfg['proxy']).text
         logging.info('External sites see %s', my_ip)
 
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
