@@ -206,7 +206,15 @@ def save_malware(response, directory, black_list, white_list):
         stored = True
     # else save to disk
     if not stored:
-        with open(os.path.join(directory, md5), 'wb') as f:
+        if cfg['sort_mime']:
+            # set folder per mime_type
+            sort_folder = mime_type.replace('/', '_')
+            if not os.path.exists(os.path.join(directory, sort_folder)):
+                os.makedirs(os.path.join(directory, sort_folder))
+            store_path = os.path.join(directory, sort_folder, md5)
+        else:
+            store_path = os.path.join(directory, md5)
+        with open(store_path, 'wb') as f:
             f.write(data)
             logging.info("Saved %s to dump dir" % md5)
     return True
@@ -273,14 +281,15 @@ def main():
                         help="Dump the file to a Crits instance.",
                         action="store_true", default=False)
     parser.add_argument("-v", "--viper",
-                        help="Dump the file to a Viper instance",
+                        help="Dump the files to a Viper instance",
                         action="store_true", default=False)
     parser.add_argument("-x", "--vxcage",
                         help="Dump the file to a VxCage instance",
                         action="store_true", default=False)
     parser.add_argument("-c", "--cuckoo",
-                        help="Enable cuckoo analysis", 
-                        action="store_true", default=False)
+                        help="Enable Cuckoo analysis", action="store_true", default=False)
+    parser.add_argument("-s", "--sort_mime",
+                        help="Sort files by MIME type", action="store_true", default=False)
 
     global cfg
     cfg = dict()
@@ -315,10 +324,13 @@ def main():
     else:
         cfg['User-Agent'] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
 
+    cfg['sort_mime'] = args.sort_mime
+
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
-        my_ip = requests.get('http://api.ipify.org', proxies=cfg['proxy']).text
+        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg['proxy']).text
         logging.info('External sites see %s', my_ip)
+        print "External sites see %s" % my_ip
 
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
@@ -379,9 +391,9 @@ def main():
 
     print "Processing source URLs"
 
-    source_urls = {'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
+    source_urls = {'https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries': process_xml_list_desc,
+                   'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
                    'http://malc0de.com/rss/': process_xml_list_desc,
-                   # 'http://www.malwareblacklist.com/mbl.xml',   # removed for now
                    'http://vxvault.siri-urz.net/URL_List.php': process_simple_list,
                    'http://urlquery.net/': process_urlquery,
                    'http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64': process_xml_list_title,
