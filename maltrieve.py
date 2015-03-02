@@ -46,8 +46,6 @@ def upload_crits(response, md5, mime_type):
         headers = {'User-agent': 'Maltrieve'}
         zip_files = ['application/zip', 'application/gzip', 'application/x-7z-compressed']
         rar_files = ['application/x-rar-compressed']
-        domain_response_data = False
-        sample_response_data = False
 
         # submit domain / IP
         # TODO: identify if it is a domain or IP and submit accordingly
@@ -61,9 +59,10 @@ def upload_crits(response, md5, mime_type):
         try:
             # Note that this request does NOT go through proxies
             domain_response = requests.post(url, headers=headers, data=domain_data, verify=False)
-            domain_response_data = domain_response.json()
-            logging.info("Submitted domain info for %s to Crits, response was %s" % (md5,
-                         domain_response_data["message"]))
+            if domain_response.status_code == requests.codes.ok:
+                domain_response_data = domain_response.json()
+                logging.info("Submitted domain info for %s to Crits, response was %s" % (md5,
+                             domain_response_data["message"]))
         except:
             logging.info("Exception caught from Crits when submitting domain")
 
@@ -86,16 +85,17 @@ def upload_crits(response, md5, mime_type):
         try:
             # Note that this request does NOT go through proxies
             sample_response = requests.post(url, headers=headers, files=files, data=sample_data, verify=False)
-            sample_response_data = sample_response.json()
-            logging.info("Submitted sample info for %s to Crits, response was %s" % (md5,
+            if sample_response.status_code == requests.codes.ok:
+                sample_response_data = sample_response.json()
+                logging.info("Submitted sample info for %s to Crits, response was %s" % (md5,
                          sample_response_data["message"]))
         except:
             logging.info("Exception caught from Crits when submitting sample")
 
         # Create a relationship for the sample and domain        
         url = "{0}/api/v1/relationships/".format(config.get('Maltrieve', 'crits'))
-        if (sample_response_data['return_code'] == 0 and 
-            domain_response_data['return_code'] == 0):
+        if (domain_response.status_code == requests.codes.ok and 
+            sample_response.status_code == requests.codes.ok):
             relationship_data = {
                 'api_key': cfg['crits_key'],
                 'username': cfg['crits_user'],
@@ -111,13 +111,14 @@ def upload_crits(response, md5, mime_type):
             try:
                 # Note that this request does NOT go through proxies
                 relationship_response = requests.post(url, headers=headers, data=relationship_data, verify=False)
-                relationship_response_data = relationship_response.json()
-                logging.info("Submitted relationship info for %s to Crits, response was %s" % (md5,
-                             relationship_response_data["message"]))
+                if relationship_response.status_code == requests.codes.ok:
+                    relationship_response_data = relationship_response.json()
+                    logging.info("Submitted relationship info for %s to Crits, response was %s" % (md5,
+                                 relationship_response_data["message"]))
             except:
                 logging.info("Exception caught from Crits when submitting relationship")
         else:
-            logging.info("Relationship submission skipped. \n    Domain message was %s\n    Sample message was %s" % (domain_response_data["message"], sample_response_data["message"]))
+            logging.info("Relationship submission skipped. \n    Domain was %s\n    Sample response was %s\n    Domain response was %s\n" % (url_tag.netloc, sample_response.status_code, domain_response.status_code))
 
 
 def upload_vxcage(response, md5):
