@@ -117,7 +117,7 @@ def upload_crits(response, md5, mime_type):
             except:
                 logging.info("Exception caught from Crits when submitting relationship")
         else:
-            logging.info("Relationship submission skipped. \n    Domain message was %s\n    Sample message was %s" % (domain_response_data["message"], sample_response_data["message"])
+            logging.info("Relationship submission skipped. \n    Domain message was %s\n    Sample message was %s" % (domain_response_data["message"], sample_response_data["message"]))
 
 
 def upload_vxcage(response, md5):
