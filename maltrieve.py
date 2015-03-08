@@ -46,6 +46,8 @@ def upload_crits(response, md5, mime_type):
         headers = {'User-agent': 'Maltrieve'}
         zip_files = ['application/zip', 'application/gzip', 'application/x-7z-compressed']
         rar_files = ['application/x-rar-compressed']
+        inserted_domain = False
+        inserted_sample = False
 
         # submit domain / IP
         # TODO: identify if it is a domain or IP and submit accordingly
@@ -63,6 +65,8 @@ def upload_crits(response, md5, mime_type):
                 domain_response_data = domain_response.json()
                 logging.info("Submitted domain info for %s to Crits, response was %s" % (md5,
                              domain_response_data["message"]))
+                if domain_response_data['return_code'] == 0: 
+                    inserted_domain = True
         except:
             logging.info("Exception caught from Crits when submitting domain")
 
@@ -89,13 +93,14 @@ def upload_crits(response, md5, mime_type):
                 sample_response_data = sample_response.json()
                 logging.info("Submitted sample info for %s to Crits, response was %s" % (md5,
                          sample_response_data["message"]))
+                if sample_response_data['return_code'] == 0:
+                    inserted_sample = True
         except:
             logging.info("Exception caught from Crits when submitting sample")
 
         # Create a relationship for the sample and domain        
         url = "{0}/api/v1/relationships/".format(config.get('Maltrieve', 'crits'))
-        if (domain_response.status_code == requests.codes.ok and 
-            sample_response.status_code == requests.codes.ok):
+        if (inserted_sample and inserted_domain):
             relationship_data = {
                 'api_key': cfg['crits_key'],
                 'username': cfg['crits_user'],
