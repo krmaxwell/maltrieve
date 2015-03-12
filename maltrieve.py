@@ -290,8 +290,11 @@ def main():
             hashes = pickle.load(hashfile)
 
     if os.path.exists('urls.json'):
-        with open('urls.json', 'rb') as urlfile:
-            past_urls = json.load(urlfile)
+        try:
+            with open('urls.json', 'rb') as urlfile:
+                past_urls = json.load(urlfile)
+        except ValueError:
+            pass
     elif os.path.exists('urls.obj'):
         with open('urls.obj', 'rb') as urlfile:
             past_urls = pickle.load(urlfile)
