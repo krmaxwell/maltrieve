@@ -290,8 +290,11 @@ def main():
             hashes = pickle.load(hashfile)
 
     if os.path.exists('urls.json'):
-        with open('urls.json', 'rb') as urlfile:
-            past_urls = json.load(urlfile)
+        try:
+            with open('urls.json', 'rb') as urlfile:
+                past_urls = json.load(urlfile)
+        except ValueError:
+            pass
     elif os.path.exists('urls.obj'):
         with open('urls.obj', 'rb') as urlfile:
             past_urls = pickle.load(urlfile)
@@ -337,7 +340,7 @@ def main():
     if past_urls:
         logging.info('Dumping past URLs to file')
         with open('urls.json', 'w') as urlfile:
-            json.dump(past_urls, urlfile)
+            json.dump(list(past_urls), urlfile)
 
     if hashes:
         with open('hashes.json', 'w') as hashfile:
