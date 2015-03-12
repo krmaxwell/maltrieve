@@ -340,7 +340,7 @@ def main():
     if past_urls:
         logging.info('Dumping past URLs to file')
         with open('urls.json', 'w') as urlfile:
-            json.dump(past_urls, urlfile)
+            json.dump(list(past_urls), urlfile)
 
     if hashes:
         with open('hashes.json', 'w') as hashfile:
