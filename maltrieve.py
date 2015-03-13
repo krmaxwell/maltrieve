@@ -121,9 +121,9 @@ def upload_crits(response, md5, mime_type):
                     logging.info("Submitted relationship info for %s to Crits, response was %s" % (md5,
                                  relationship_response_data["message"]))
             except:
-                logging.info("Exception caught from Crits when submitting relationship")
+                logging.info("Relationship submission skipped. \n    Domain was %s\n    Sample response was %s\n    Domain response was %s\n" % (url_tag.netloc, sample_response.status_code, domain_response.status_code))
         else:
-            logging.info("Relationship submission skipped. \n    Domain was %s\n    Sample response was %s\n    Domain response was %s\n" % (url_tag.netloc, sample_response.status_code, domain_response.status_code))
+            logging.info("Skipping adding relationship. CRITs could not process domain or sample.")
 
 
 def upload_vxcage(response, md5):
