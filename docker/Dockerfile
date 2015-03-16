@@ -19,17 +19,17 @@ MAINTAINER Michael Boman <michael@michaelboman.org>
 
 USER root
 RUN apt-get update && \
-  apt-get install -y --no-install-recommends \
+  apt-get dist-upgrade -y
+RUN apt-get install -y --no-install-recommends \
     gcc \
     git \
     libpython2.7-stdlib \
     python2.7 \
     python2.7-dev \
     python-pip \
-    python-setuptools && \
-
-  rm -rf /var/lib/apt/lists/* && \
-
+    python-setuptools
+RUN rm -rf /var/lib/apt/lists/* && \
+  pip install --upgrade pip && \
   groupadd -r maltrieve && \
   useradd -r -g maltrieve -d /home/maltrieve -s /sbin/nologin -c "Maltrieve User" maltrieve
 
