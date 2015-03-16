@@ -39,3 +39,16 @@ stash
 
 # vim swap files
 *.swp
+
+# PyCharm IDE directory
+.idea
+
+# virtualenv
+venv
+
+# debug data
+maltrieve.out
+
+archive
+grequests
+*.bak
