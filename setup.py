@@ -13,4 +13,5 @@ setup(name='maltrieve',
       url='http://maltrieve.org',
       install_requires=reqs,
       package_dir={'maltrieve': 'src'},
-      packages=['maltrieve'])
+      packages=['maltrieve'],
+      entry_points={'console_scripts': ['maltrieve =  maltrieve:main']})
