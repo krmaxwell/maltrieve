@@ -41,15 +41,15 @@ Maltrieve requires the following dependencies:
 * [python-magic](https://pypi.python.org/pypi/python-magic/)
 * [Requests](http://www.python-requests.org)
 
-With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get install python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. The rest of the requirements can be installed locally using ```pip install -r requirements.txt```. You may need to prepend that with ```sudo``` if not running in a virtual environment.
+With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get install python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. After that, just `pip install .` or `python setup.py install`. You may need to prepend that with ```sudo``` if not running in a virtual environment, but using such an environment is highly encouraged.
 
 ## Usage
 
-__Basic execution:__ ```python maltrieve.py```
+__Basic execution:__ `maltrieve` (if installed normally) or ```python maltrieve.py``` (if just downloaded and run)
 
 ### Options
 ```
-usage: maltrieve.py [-h] [-p PROXY] [-d DUMPDIR] [-l LOGFILE] [-x] [-v] [-c] [-s]
+usage: maltrieve [-h] [-p PROXY] [-d DUMPDIR] [-l LOGFILE] [-x] [-v] [-c] [-s]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -88,4 +88,4 @@ Aside from pull requests, non-developers can open issues on [Github](https://git
 * Suggestions of additional sources for malware lists
 * Descriptions of how you use it and ways we can improve it for you
 
-Check the [contributing guide](./CONTRIBUTING.md) for details. If you'd prefer not to open an issue, you can [contact me on Twitter](https://twitter.com/kylemaxwell) or [email](mailto:krmaxwell@gmail.com).
+Check the [contributing guide](./CONTRIBUTING.md) for details. 

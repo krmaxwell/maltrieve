@@ -391,7 +391,7 @@ def main():
     if os.path.exists('urls.json'):
         try:
             with open('urls.json', 'rb') as urlfile:
-                past_urls = json.load(urlfile)
+                past_urls = set(json.load(urlfile))
         except ValueError:
             pass
     elif os.path.exists('urls.obj'):
