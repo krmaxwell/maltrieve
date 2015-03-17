@@ -35,8 +35,6 @@ import ConfigParser
 import magic
 
 from urlparse import urlparse
-from threading import Thread
-from Queue import Queue
 from bs4 import BeautifulSoup
 
 
