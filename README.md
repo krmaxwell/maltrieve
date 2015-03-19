@@ -1,4 +1,5 @@
 [![Stories in Ready](https://badge.waffle.io/krmaxwell/maltrieve.png?label=ready&title=Ready)](https://waffle.io/krmaxwell/maltrieve)
+[![Stories in In Progress](https://badge.waffle.io/krmaxwell/maltrieve.png?label=in%20progress&title=In%20Progress)](https://waffle.io/krmaxwell/maltrieve)
 ```
  _______ _______        _______  ______ _____ _______ _    _ _______
  |  |  | |_____| |         |    |_____/   |   |______  \  /  |______
@@ -89,4 +90,4 @@ Aside from pull requests, non-developers can open issues on [Github](https://git
 * Suggestions of additional sources for malware lists
 * Descriptions of how you use it and ways we can improve it for you
 
-Check the [contributing guide](./CONTRIBUTING.md) for details. 
+Check the [contributing guide](./CONTRIBUTING.md) for details.
