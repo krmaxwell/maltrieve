@@ -19,6 +19,7 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 
 These lists will be implemented if/when they return to activity.
 
+* [Malware Blacklist](http://www.malwareblacklist.com/showMDL.php)
 * [NovCon Minotaur](http://minotauranalysis.com/malwarelist-urls.aspx)
 
 Other improvements include:
@@ -41,7 +42,7 @@ Maltrieve requires the following dependencies:
 * [python-magic](https://pypi.python.org/pypi/python-magic/)
 * [Requests](http://www.python-requests.org)
 
-With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get install python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. After that, just `pip install .` or `python setup.py install`. You may need to prepend that with ```sudo``` if not running in a virtual environment, but using such an environment is highly encouraged.
+With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get install python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. After that, just `python setup.py install` or `pip install .` (preferably the former). That command may need to be prepended with ```sudo``` if not running in a virtual environment, but we highly encourage using such an environment.
 
 ## Usage
 
