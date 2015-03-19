@@ -35,8 +35,6 @@ import ConfigParser
 import magic
 
 from urlparse import urlparse
-from threading import Thread
-from Queue import Queue
 from bs4 import BeautifulSoup
 
 
@@ -86,10 +84,6 @@ def upload_viper(response, md5):
                          response_data["message"]))
         except:
             logging.info("Exception caught from Viper")
-
-
-def exception_handler(request, exception):
-    logging.info("Request for %s failed: %s" % (request, exception))
 
 
 def save_malware(response, directory, black_list, white_list):
