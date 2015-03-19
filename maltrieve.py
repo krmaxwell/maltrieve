@@ -177,8 +177,6 @@ def main():
     hashes = set()
     past_urls = set()
 
-    now = datetime.datetime.now()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--proxy",
                         help="Define HTTP proxy as address:port")
