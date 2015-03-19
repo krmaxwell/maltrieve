@@ -45,7 +45,7 @@ def upload_vxcage(response, md5):
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
         tags = {'tags': url_tag.netloc + ',Maltrieve'}
-        url = "{0}/malware/add".format(config.get('Maltrieve', 'vxcage'))
+        url = "{srv}/malware/add".format(srv=config.get('Maltrieve', 'vxcage'))
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
@@ -60,7 +60,7 @@ def upload_vxcage(response, md5):
 def upload_cuckoo(response, md5):
     if response:
         data = {'url': response.url}
-        url = "{0}/tasks/create/url".format(config.get('Maltrieve', 'cuckoo'))
+        url = "{srv}/tasks/create/url".format(srv=config.get('Maltrieve', 'cuckoo'))
         headers = {'User-agent': 'Maltrieve'}
         #try:
         response = requests.post(url, headers=headers, data=data)
@@ -75,7 +75,7 @@ def upload_viper(response, md5):
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
         tags = {'tags': url_tag.netloc + ',Maltrieve'}
-        url = "{0}/file/add".format(config.get('Maltrieve', 'viper'))
+        url = "{srv}/file/add".format(srv=config.get('Maltrieve', 'viper'))
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
