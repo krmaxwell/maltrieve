@@ -42,7 +42,7 @@ Maltrieve requires the following dependencies:
 * [python-magic](https://pypi.python.org/pypi/python-magic/)
 * [Requests](http://www.python-requests.org)
 
-With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get install python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. After that, just `pip install .` or `python setup.py install`. You may need to prepend that with ```sudo``` if not running in a virtual environment, but using such an environment is highly encouraged.
+With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get install python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. After that, just `pip install -e .`.  You may need to prepend that with ```sudo``` if not running in a virtual environment, but using such an environment is highly encouraged.
 
 ## Usage
 
@@ -89,4 +89,4 @@ Aside from pull requests, non-developers can open issues on [Github](https://git
 * Suggestions of additional sources for malware lists
 * Descriptions of how you use it and ways we can improve it for you
 
-Check the [contributing guide](./CONTRIBUTING.md) for details. 
+Check the [contributing guide](./CONTRIBUTING.md) for details.
