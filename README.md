@@ -1,4 +1,5 @@
 [![Stories in Ready](https://badge.waffle.io/krmaxwell/maltrieve.png?label=ready&title=Ready)](https://waffle.io/krmaxwell/maltrieve)
+[![Stories in In Progress](https://badge.waffle.io/krmaxwell/maltrieve.png?label=in%20progress&title=In%20Progress)](https://waffle.io/krmaxwell/maltrieve)
 ```
  _______ _______        _______  ______ _____ _______ _    _ _______
  |  |  | |_____| |         |    |_____/   |   |______  \  /  |______
