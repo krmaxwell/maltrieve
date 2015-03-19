@@ -1,8 +1,8 @@
 #
 # This Docker image encapsulates Maltrieve, a tool to retrieve malware
 # directly from the source for security researchers.
-# which was created by Kyle Maxwell (technoskald) and is
-# available at https://github.com/technoskald/maltrieve.
+# which was created by Kyle Maxwell (krmaxwell) and is
+# available at https://github.com/krmaxwell/maltrieve.
 #
 # The file below is based on ideas from Spenser Reinhardt's Dockerfile
 # (https://registry.hub.docker.com/u/sreinhardt/honeynet/dockerfile)
@@ -12,7 +12,7 @@
 #
 # sudo docker run --rm -it technoskald/maltrieve bash
 #
-# then run ./maltrieve.py with the desired parameters.
+# then run maltrieve.py with the desired parameters.
 
 FROM ubuntu:14.04
 MAINTAINER Michael Boman <michael@michaelboman.org>
@@ -34,7 +34,7 @@ RUN rm -rf /var/lib/apt/lists/* && \
   useradd -r -g maltrieve -d /home/maltrieve -s /sbin/nologin -c "Maltrieve User" maltrieve
 
 WORKDIR /home
-RUN git clone https://github.com/technoskald/maltrieve.git && \
+RUN git clone https://github.com/krmaxwell/maltrieve.git && \
   cd maltrieve && \
   python setup.py install && \
   chown -R maltrieve:maltrieve /home/maltrieve
@@ -44,4 +44,3 @@ ENV HOME /home/maltrieve
 ENV USER maltrieve
 WORKDIR /home/maltrieve
 CMD ["maltrieve"]
-
