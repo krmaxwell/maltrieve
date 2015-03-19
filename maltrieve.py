@@ -37,6 +37,76 @@ from urlparse import urlparse
 from bs4 import BeautifulSoup
 
 
+class config:
+
+    def __init__(self, args, filename='maltrieve.cfg'):
+        self.configp = ConfigParser.ConfigParser()
+        self.configp.read(filename)
+
+        if args.logfile or self.configp.get('Maltrieve', 'logfile'):
+            if args.logfile:
+                self.logfile = args.logfile
+            else:
+                self.logfile = self.configp.get('Maltrieve', 'logfile')
+            logging.basicConfig(filename=self.logfile, level=logging.DEBUG,
+                                format='%(asctime)s %(thread)d %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S')
+        else:
+            logging.basicConfig(level=logging.DEBUG,
+                                format='%(asctime)s %(thread)d %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S')
+        if args.proxy:
+            self.proxy = {'http': args.proxy}
+        elif self.configp.has_option('Maltrieve', 'proxy'):
+            self.proxy = {'http': self.configp.get('Maltrieve', 'proxy')}
+        else:
+            self.proxy = None
+
+        if self.configp.has_option('Maltrieve', 'User-Agent'):
+            self.useragent = {'User-Agent': self.configp.get('Maltrieve', 'User-Agent')}
+        else:
+            self.useragent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
+
+        self.sort_mime = args.sort_mime
+
+        if self.configp.has_option('Maltrieve', 'black_list'):
+            self.black_list = self.configp.get('Maltrieve', 'black_list').strip().split(',')
+        else:
+            self.black_list = []
+
+        if self.configp.has_option('Maltrieve', 'white_list'):
+            self.white_list = self.configp.get('Maltrieve', 'white_list').strip().split(',')
+        else:
+            self.white_list = False
+
+        # make sure we can open the directory for writing
+        if args.dumpdir:
+            self.dumpdir = args.dumpdir
+        elif self.configp.get('Maltrieve', 'dumpdir'):
+            self.dumpdir = self.configp.get('Maltrieve', 'dumpdir')
+        else:
+            self.dumpdir = '/tmp/malware'
+
+        # Create the dir
+        if not os.path.exists(self.dumpdir):
+            os.makedirs(self.dumpdir)
+
+        try:
+            d = tempfile.mkdtemp(dir=self.dumpdir)
+        except Exception as e:
+            logging.error('Could not open {dir} for writing ({exception}), using default'.format(dir=self.dumpdir, exception=e))
+            self.dumpdir = '/tmp/malware'
+        else:
+            os.rmdir(d)
+
+        logging.info('Using {dir} as dump directory'.format(dir=self.dumpdir))
+
+        self.vxcage = args.vxcage or self.configp.has_option('Maltrieve', 'vxcage')
+        self.cuckoo = args.cuckoo or self.configp.has_option('Maltrieve', 'cuckoo')
+        self.viper = args.viper or self.configp.has_option('Maltrieve', 'viper')
+        self.logheaders = self.configp.get('Maltrieve', 'logheaders')
+
+
 def upload_vxcage(response, md5):
     if response:
         url_tag = urlparse(response.url)
@@ -193,81 +263,14 @@ def main():
     parser.add_argument("-s", "--sort_mime",
                         help="Sort files by MIME type", action="store_true", default=False)
 
-    global cfg
-    cfg = dict()
     args = parser.parse_args()
-
-    global config
-    config = ConfigParser.ConfigParser()
-    config.read('maltrieve.cfg')
-
-    if args.logfile or config.get('Maltrieve', 'logfile'):
-        if args.logfile:
-            cfg['logfile'] = args.logfile
-        else:
-            cfg['logfile'] = config.get('Maltrieve', 'logfile')
-        logging.basicConfig(filename=cfg['logfile'], level=logging.DEBUG,
-                            format='%(asctime)s %(thread)d %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S')
-    else:
-        logging.basicConfig(level=logging.DEBUG,
-                            format='%(asctime)s %(thread)d %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S')
-
-    if args.proxy:
-        cfg['proxy'] = {'http': args.proxy}
-    elif config.has_option('Maltrieve', 'proxy'):
-        cfg['proxy'] = {'http': config.get('Maltrieve', 'proxy')}
-    else:
-        cfg['proxy'] = None
-
-    if config.has_option('Maltrieve', 'User-Agent'):
-        cfg['User-Agent'] = {'User-Agent': config.get('Maltrieve', 'User-Agent')}
-    else:
-        cfg['User-Agent'] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
-
-    cfg['sort_mime'] = args.sort_mime
+    cfg = config(args, 'maltrieve.cfg')
 
     if cfg['proxy']:
         logging.info('Using proxy %s', cfg['proxy'])
         my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg['proxy']).text
         logging.info('External sites see {ip}'.format(ip=my_ip))
         print 'External sites see {ip}'.format(ip=my_ip)
-
-    cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
-    cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
-    cfg['viper'] = args.viper or config.has_option('Maltrieve', 'viper')
-    cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
-
-    black_list = []
-    if config.has_option('Maltrieve', 'black_list'):
-        black_list = config.get('Maltrieve', 'black_list').strip().split(',')
-
-    white_list = False
-    if config.has_option('Maltrieve', 'white_list'):
-        white_list = config.get('Maltrieve', 'white_list').strip().split(',')
-
-    # make sure we can open the directory for writing
-    if args.dumpdir:
-        cfg['dumpdir'] = args.dumpdir
-    elif config.get('Maltrieve', 'dumpdir'):
-        cfg['dumpdir'] = config.get('Maltrieve', 'dumpdir')
-    else:
-        cfg['dumpdir'] = '/tmp/malware'
-
-    # Create the dir
-    if not os.path.exists(cfg['dumpdir']):
-        os.makedirs(cfg['dumpdir'])
-
-    try:
-        d = tempfile.mkdtemp(dir=cfg['dumpdir'])
-    except Exception as e:
-        logging.error('Could not open {dir} for writing ({exception}), using default'.format(dir=cfg['dumpdir'], exception=e))
-        cfg['dumpdir'] = '/tmp/malware'
-    else:
-        os.rmdir(d)
-
-    logging.info('Using {dir} as dump directory'.format(dir=cfg['dumpdir']))
 
     if os.path.exists('hashes.json'):
         with open('hashes.json', 'rb') as hashfile:
@@ -302,7 +305,7 @@ def main():
 
     print "Completed source processing"
 
-    headers['User-Agent'] = cfg['User-Agent']
+    headers['User-Agent'] = cfg.useragent
     malware_urls = set()
     for response in source_lists:
         if hasattr(response, 'status_code') and response.status_code == 200:
@@ -311,13 +314,13 @@ def main():
     print "Downloading samples, check log for details"
 
     malware_urls -= past_urls
-    reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in malware_urls]
+    reqs = [grequests.get(url, headers=headers, proxies=cfg.proxy) for url in malware_urls]
     for chunk in chunker(reqs, 32):
         malware_downloads = grequests.map(chunk)
         for each in malware_downloads:
             if not each or each.status_code != 200:
                 continue
-            md5 = save_malware(each, cfg['dumpdir'], black_list, white_list)
+            md5 = save_malware(each, cfg.dumpdir, cfg.black_list, cfg.white_list)
             if not md5:
                 continue
             past_urls.add(each.url)
