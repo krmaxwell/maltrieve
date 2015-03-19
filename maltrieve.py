@@ -173,7 +173,6 @@ def chunker(seq, size):
 
 
 def main():
-    global hashes
     hashes = set()
     past_urls = set()
 
