@@ -1,0 +1,3 @@
+test:
+  override:
+    py.test test.py
