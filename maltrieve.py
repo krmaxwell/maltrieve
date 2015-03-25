@@ -300,7 +300,7 @@ def load_hashes(filename="hashes.json"):
 def save_hashes(hashes, filename='hashes.json'):
     logging.info('Dumping hashes to {f}'.format(f=filename))
     with open(filename, 'w') as hashfile:
-        json.dump(list(hashes), hashfile)
+        json.dump(list(hashes), hashfile, indent=2)
 
 
 def load_urls(filename='urls.json'):
@@ -318,8 +318,8 @@ def load_urls(filename='urls.json'):
 
 def save_urls(urls, filename='urls.json'):
     logging.info('Dumping past URLs to {f}'.format(f=filename))
-    with open('urls.json', 'w') as urlfile:
-        json.dump(list(urls), urlfile)
+    with open(filename, 'w') as urlfile:
+        json.dump(list(urls), urlfile, indent=2)
 
 
 def main():
