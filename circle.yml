@@ -1,4 +1,4 @@
 test:
   override:
-    - coverage run --source=maltrieve py.test test.py
+    - py.test --cov maltrieve test.py
     - coveralls
