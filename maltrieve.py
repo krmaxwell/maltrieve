@@ -107,12 +107,12 @@ class config:
         self.logheaders = self.configp.get('Maltrieve', 'logheaders')
 
 
-def upload_vxcage(response, md5):
+def upload_vxcage(response, md5, cfg):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
         tags = {'tags': url_tag.netloc + ',Maltrieve'}
-        url = "{srv}/malware/add".format(srv=config.get('Maltrieve', 'vxcage'))
+        url = "{srv}/malware/add".format(cfg.vxcage)
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
@@ -124,25 +124,25 @@ def upload_vxcage(response, md5):
 
 
 # This gives cuckoo the URL instead of the file.
-def upload_cuckoo(response, md5):
+def upload_cuckoo(response, md5, cfg):
     if response:
         data = {'url': response.url}
-        url = "{srv}/tasks/create/url".format(srv=config.get('Maltrieve', 'cuckoo'))
+        url = "{srv}/tasks/create/url".format(srv=cfg.cuckoo)
         headers = {'User-agent': 'Maltrieve'}
-        #try:
-        response = requests.post(url, headers=headers, data=data)
-        response_data = response.json()
-        logging.info("Submitted {md5} to Cuckoo, task ID {taskid}".format(md5=md5, taskid=response_data["task_id"]))
-        #except:
-            #logging.info("Exception caught from Cuckoo")
+        try:
+            response = requests.post(url, headers=headers, data=data)
+            response_data = response.json()
+            logging.info("Submitted {md5} to Cuckoo, task ID {taskid}".format(md5=md5, taskid=response_data["task_id"]))
+        except:
+            logging.info("Exception caught from Cuckoo")
 
 
-def upload_viper(response, md5):
+def upload_viper(response, md5, cfg):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
         tags = {'tags': url_tag.netloc + ',Maltrieve'}
-        url = "{srv}/file/add".format(srv=config.get('Maltrieve', 'viper'))
+        url = "{srv}/file/add".format(srv=cfg.viper)
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
@@ -153,15 +153,15 @@ def upload_viper(response, md5):
             logging.info("Exception caught from Viper")
 
 
-def save_malware(response, directory, black_list, white_list):
+def save_malware(response, cfg):
     url = response.url
     data = response.content
     mime_type = magic.from_buffer(data, mime=True)
-    if mime_type in black_list:
+    if mime_type in cfg.black_list:
         logging.info('{mtype} in ignore list for {url}'.format(mtype=mime_type, url=url))
         return
-    if white_list:
-        if mime_type in white_list:
+    if cfg.white_list:
+        if mime_type in cfg.white_list:
             pass
         else:
             logging.info('{mtype} not in whitelist for {url}'.format(mtype=mime_type, url=url))
@@ -175,12 +175,12 @@ def save_malware(response, directory, black_list, white_list):
     stored = False
     # Submit to external services
     if cfg['vxcage']:
-        upload_vxcage(response, md5)
+        upload_vxcage(response, md5, cfg)
         stored = True
     if cfg['cuckoo']:
-        upload_cuckoo(response, md5)
+        upload_cuckoo(response, md5, cfg)
     if cfg['viper']:
-        upload_viper(response, md5)
+        upload_viper(response, md5, cfg)
         stored = True
     # else save to disk
     if not stored:
@@ -320,7 +320,7 @@ def main():
         for each in malware_downloads:
             if not each or each.status_code != 200:
                 continue
-            md5 = save_malware(each, cfg.dumpdir, cfg.black_list, cfg.white_list)
+            md5 = save_malware(each, cfg)
             if not md5:
                 continue
             past_urls.add(each.url)
