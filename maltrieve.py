@@ -309,7 +309,7 @@ def load_urls(filename='urls.json'):
             with open(filename, 'rb') as urlfile:
                 urls = set(json.load(urlfile))
             logging.info('Loaded urls from {f}'.format(f=filename))
-        except ValueError:
+        except ValueError:  # this usually happens when the file is empty
             urls = set()
     else:
         urls = set()
