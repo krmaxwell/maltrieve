@@ -21,3 +21,15 @@ def test_parse_simple_list():
     source = requests.get('http://xwell.org/assets/maltrieve-test.txt').text
     assert maltrieve.process_simple_list(source) == \
         set(['http://example.org/mylist', 'http://example.com/yourlist'])
+
+
+def test_parse_xml_list():
+    source = requests.get('http://xwell.org/assets/maltrieve-test-list.xml').text
+    assert maltrieve.process_xml_list_title(source) == \
+        set(['http://example.org/mylist', 'http://example.com/yourlist'])
+
+
+def test_parse_xml_desc():
+    source = requests.get('http://xwell.org/assets/maltrieve-test-desc.xml').text
+    assert maltrieve.process_xml_list_desc(source) == \
+        set(['http://example.org/mylist', 'http://example.com/yourlist'])
