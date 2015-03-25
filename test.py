@@ -1,4 +1,5 @@
 import maltrieve
+import requests
 
 
 def test_basic_args():
@@ -17,8 +18,6 @@ def test_saving_args():
 
 
 def test_parse_simple_list():
-    sources = 'http://example.org/mylist \
-               http://example.com/yourlist \
-               http://example.org/mylist'
-    assert maltrieve.process_simple_list(sources) == \
-        set('http://example.org/mylist', 'http://example.com/yourlist')
+    source = requests.get('http://xwell.org/assets/maltrieve-test.txt').text
+    assert maltrieve.process_simple_list(source) == \
+        set(['http://example.org/mylist', 'http://example.com/yourlist'])
