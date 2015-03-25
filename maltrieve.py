@@ -258,10 +258,7 @@ def chunker(seq, size):
     return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
 
 
-def main():
-    hashes = set()
-    past_urls = set()
-
+def setup_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--proxy",
                         help="Define HTTP proxy as address:port")
@@ -280,7 +277,14 @@ def main():
     parser.add_argument("-s", "--sort_mime",
                         help="Sort files by MIME type", action="store_true", default=False)
 
-    args = parser.parse_args()
+    return parser.parse_args(args)
+
+
+def main():
+    hashes = set()
+    past_urls = set()
+
+    args = setup_args(sys.argv)
     cfg = config(args, 'maltrieve.cfg')
 
     if cfg.proxy:
