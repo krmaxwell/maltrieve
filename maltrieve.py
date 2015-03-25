@@ -311,6 +311,8 @@ def load_urls(filename='urls.json'):
             logging.info('Loaded urls from {f}'.format(f=filename))
         except ValueError:
             urls = set()
+    else:
+        urls = set()
     return urls
 
 
