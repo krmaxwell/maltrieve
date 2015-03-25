@@ -92,15 +92,19 @@ class config:
 
         # Create the dir
         if not os.path.exists(self.dumpdir):
-            os.makedirs(self.dumpdir)
+            try:
+                os.makedirs(self.dumpdir)
+            except IOError:
+                logging.error('Could not create {dir}, using default'.format(dir=self.dumpdir))
+                self.dumpdir = '/tmp/malware'
 
         try:
-            d = tempfile.mkdtemp(dir=self.dumpdir)
-        except Exception as e:
-            logging.error('Could not open {dir} for writing ({exception}), using default'.format(dir=self.dumpdir, exception=e))
+            f = tempfile.mkstemp(dir=self.dumpdir)
+        except IOError:
+            logging.error('Could not open {dir} for writing, using default'.format(dir=self.dumpdir))
             self.dumpdir = '/tmp/malware'
         else:
-            os.rmdir(d)
+            os.remove(f)
 
         logging.info('Using {dir} as dump directory'.format(dir=self.dumpdir))
 
@@ -123,8 +127,11 @@ def upload_vxcage(response, md5, cfg):
             response = requests.post(url, headers=headers, files=files, data=tags)
             response_data = response.json()
             logging.info("Submitted {md5} to VxCage, response was {msg}".format(md5=md5, msg=response_data["message"]))
-        except:
-            logging.info("Exception caught from VxCage")
+        except requests.exceptions.ConnectionError:
+            logging.info("Could not connect to VxCage, will attempt local storage")
+            return False
+        else:
+            return True
 
 
 # This gives cuckoo the URL instead of the file.
@@ -137,8 +144,11 @@ def upload_cuckoo(response, md5, cfg):
             response = requests.post(url, headers=headers, data=data)
             response_data = response.json()
             logging.info("Submitted {md5} to Cuckoo, task ID {taskid}".format(md5=md5, taskid=response_data["task_id"]))
-        except:
-            logging.info("Exception caught from Cuckoo")
+        except requests.exceptions.ConnectionError:
+            logging.info("Could not connect to Cuckoo, will attempt local storage")
+            return False
+        else:
+            return True
 
 
 def upload_viper(response, md5, cfg):
@@ -153,8 +163,11 @@ def upload_viper(response, md5, cfg):
             response = requests.post(url, headers=headers, files=files, data=tags)
             response_data = response.json()
             logging.info("Submitted {md5} to Viper, response was {msg}".format(md5=md5, msg=response_data["message"]))
-        except:
-            logging.info("Exception caught from Viper")
+        except requests.exceptions.ConnectionError:
+            logging.info("Could not connect to Viper, will attempt local storage")
+            return False
+        else:
+            return True
 
 
 def save_malware(response, cfg):
@@ -180,13 +193,11 @@ def save_malware(response, cfg):
     # Submit to external services
     # TODO: merge these
     if cfg['vxcage']:
-        upload_vxcage(response, md5, cfg)
-        stored = True
+        stored = upload_vxcage(response, md5, cfg) or stored
     if cfg['cuckoo']:
-        upload_cuckoo(response, md5, cfg)
+        stored = upload_cuckoo(response, md5, cfg) or stored
     if cfg['viper']:
-        upload_viper(response, md5, cfg)
-        stored = True
+        stored = upload_viper(response, md5, cfg) or stored
     # else save to disk
     if not stored:
         if cfg['sort_mime']:
