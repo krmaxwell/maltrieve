@@ -35,12 +35,23 @@ def test_parse_xml_desc():
         set(['http://example.org/mylist', 'http://example.com/yourlist'])
 
 
-def test_load_hashes():
-    assert maltrieve.load_hashes('test-load-hashes.json') == \
+def test_load_hashes(hashfile='test-load-hashes.json'):
+    assert maltrieve.load_hashes(hashfile) == \
         set(['d41d8cd98f00b204e9800998ecf8427e'])
 
 
 def test_save_hashes():
     hashes = set(['d41d8cd98f00b204e9800998ecf8427e'])
     maltrieve.save_hashes(hashes, 'test-save-hashes.json')
-    test_load_hashes()
+    assert test_load_hashes('test-save-hashes.json')
+
+
+def test_load_urls(urlfile='test-load-urls.json'):
+    assert maltrieve.load_urls(urlfile) == \
+        set(['http://example.com/badurl'])
+
+
+def test_save_urls():
+    urls = set(['http://example.com/badurl'])
+    maltrieve.save_urls(urls, 'test-save-urls.json')
+    assert test_load_urls('test-save-urls.json')

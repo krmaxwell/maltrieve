@@ -24,7 +24,6 @@ import hashlib
 import json
 import logging
 import os
-import pickle
 import re
 import resource
 import sys
@@ -115,6 +114,13 @@ class config:
         self.cuckoo = args.cuckoo or self.configp.has_option('Maltrieve', 'cuckoo')
         self.viper = args.viper or self.configp.has_option('Maltrieve', 'viper')
         self.logheaders = self.configp.get('Maltrieve', 'logheaders')
+
+    def check_proxy(self):
+        if self.proxy:
+            logging.info('Using proxy {proxy}'.format(proxy=self.proxy))
+            my_ip = requests.get('http://ipinfo.io/ip', proxies=self.proxy).text
+            logging.info('External sites see {ip}'.format(ip=my_ip))
+            print 'External sites see {ip}'.format(ip=my_ip)
 
 
 def upload_vxcage(response, md5, cfg):
@@ -285,14 +291,33 @@ def load_hashes(filename="hashes.json"):
     if os.path.exists(filename):
         with open(filename, 'rb') as hashfile:
             hashes = set(json.load(hashfile))
+        logging.info('Loaded hashes from {f}'.format(f=filename))
     else:
         hashes = set()
     return hashes
 
 
 def save_hashes(hashes, filename='hashes.json'):
+    logging.info('Dumping hashes to {f}'.format(f=filename))
     with open(filename, 'w') as hashfile:
         json.dump(list(hashes), hashfile)
+
+
+def load_urls(filename='urls.json'):
+    if os.path.exists(filename):
+        try:
+            with open(filename, 'rb') as urlfile:
+                urls = set(json.load(urlfile))
+            logging.info('Loaded urls from {f}'.format(f=filename))
+        except ValueError:
+            urls = set()
+    return urls
+
+
+def save_urls(urls, filename='urls.json'):
+    logging.info('Dumping past URLs to {f}'.format(f=filename))
+    with open('urls.json', 'w') as urlfile:
+        json.dump(list(urls), urlfile)
 
 
 def main():
@@ -302,25 +327,10 @@ def main():
 
     args = setup_args(sys.argv)
     cfg = config(args, 'maltrieve.cfg')
-
-    # TODO: move this inside config.__init__()
-    if cfg.proxy:
-        logging.info('Using proxy {proxy}'.format(proxy=cfg.proxy))
-        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg.proxy).text
-        logging.info('External sites see {ip}'.format(ip=my_ip))
-        print 'External sites see {ip}'.format(ip=my_ip)
+    cfg.check_proxy()
 
     hashes = load_hashes('hashes.json')
-
-    if os.path.exists('urls.json'):
-        try:
-            with open('urls.json', 'rb') as urlfile:
-                past_urls = set(json.load(urlfile))
-        except ValueError:
-            pass
-    elif os.path.exists('urls.obj'):
-        with open('urls.obj', 'rb') as urlfile:
-            past_urls = pickle.load(urlfile)
+    past_urls = load_urls('urls.json')
 
     print "Processing source URLs"
 
@@ -361,12 +371,7 @@ def main():
 
     print "Completed downloads"
 
-    # TODO: move to functions
-    if past_urls:
-        logging.info('Dumping past URLs to file')
-        with open('urls.json', 'w') as urlfile:
-            json.dump(list(past_urls), urlfile)
-
+    save_urls(past_urls, 'urls.json')
     save_hashes(hashes, 'hashes.json')
 
 
