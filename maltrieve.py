@@ -92,15 +92,20 @@ class config:
 
         # Create the dir
         if not os.path.exists(self.dumpdir):
-            os.makedirs(self.dumpdir)
+            try:
+                os.makedirs(self.dumpdir)
+            except IOError:
+                logging.error('Could not create {dir}, using default'.format(dir=self.dumpdir))
+                self.dumpdir = '/tmp/malware'
 
         try:
-            d = tempfile.mkdtemp(dir=self.dumpdir)
-        except Exception as e:
-            logging.error('Could not open {dir} for writing ({exception}), using default'.format(dir=self.dumpdir, exception=e))
+            fd, temp_path = tempfile.mkstemp(dir=self.dumpdir)
+        except IOError:
+            logging.error('Could not open {dir} for writing, using default'.format(dir=self.dumpdir))
             self.dumpdir = '/tmp/malware'
         else:
-            os.rmdir(d)
+            os.close(fd)
+            os.remove(temp_path)
 
         logging.info('Using {dir} as dump directory'.format(dir=self.dumpdir))
 
@@ -123,8 +128,11 @@ def upload_vxcage(response, md5, cfg):
             response = requests.post(url, headers=headers, files=files, data=tags)
             response_data = response.json()
             logging.info("Submitted {md5} to VxCage, response was {msg}".format(md5=md5, msg=response_data["message"]))
-        except:
-            logging.info("Exception caught from VxCage")
+        except requests.exceptions.ConnectionError:
+            logging.info("Could not connect to VxCage, will attempt local storage")
+            return False
+        else:
+            return True
 
 
 # This gives cuckoo the URL instead of the file.
@@ -137,8 +145,11 @@ def upload_cuckoo(response, md5, cfg):
             response = requests.post(url, headers=headers, data=data)
             response_data = response.json()
             logging.info("Submitted {md5} to Cuckoo, task ID {taskid}".format(md5=md5, taskid=response_data["task_id"]))
-        except:
-            logging.info("Exception caught from Cuckoo")
+        except requests.exceptions.ConnectionError:
+            logging.info("Could not connect to Cuckoo, will attempt local storage")
+            return False
+        else:
+            return True
 
 
 def upload_viper(response, md5, cfg):
@@ -153,8 +164,11 @@ def upload_viper(response, md5, cfg):
             response = requests.post(url, headers=headers, files=files, data=tags)
             response_data = response.json()
             logging.info("Submitted {md5} to Viper, response was {msg}".format(md5=md5, msg=response_data["message"]))
-        except:
-            logging.info("Exception caught from Viper")
+        except requests.exceptions.ConnectionError:
+            logging.info("Could not connect to Viper, will attempt local storage")
+            return False
+        else:
+            return True
 
 
 def save_malware(response, cfg):
@@ -179,17 +193,15 @@ def save_malware(response, cfg):
     stored = False
     # Submit to external services
     # TODO: merge these
-    if cfg['vxcage']:
-        upload_vxcage(response, md5, cfg)
-        stored = True
-    if cfg['cuckoo']:
-        upload_cuckoo(response, md5, cfg)
-    if cfg['viper']:
-        upload_viper(response, md5, cfg)
-        stored = True
+    if cfg.vxcage:
+        stored = upload_vxcage(response, md5, cfg) or stored
+    if cfg.cuckoo:
+        stored = upload_cuckoo(response, md5, cfg) or stored
+    if cfg.viper:
+        stored = upload_viper(response, md5, cfg) or stored
     # else save to disk
     if not stored:
-        if cfg['sort_mime']:
+        if cfg.sort_mime:
             # set folder per mime_type
             sort_folder = mime_type.replace('/', '_')
             if not os.path.exists(os.path.join(cfg.dumpdir, sort_folder)):
@@ -271,9 +283,9 @@ def main():
     args = parser.parse_args()
     cfg = config(args, 'maltrieve.cfg')
 
-    if cfg['proxy']:
-        logging.info('Using proxy %s', cfg['proxy'])
-        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg['proxy']).text
+    if cfg.proxy:
+        logging.info('Using proxy {proxy}'.format(proxy=cfg.proxy))
+        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg.proxy).text
         logging.info('External sites see {ip}'.format(ip=my_ip))
         print 'External sites see {ip}'.format(ip=my_ip)
 
