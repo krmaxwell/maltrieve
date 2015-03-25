@@ -18,7 +18,8 @@ setup(name='maltrieve',
           'requests==2.3.0',
           'wsgiref==0.1.2',
           'pre-commit',
-          'pytest'
+          'pytest',
+          'coveralls'
       ],
       package_dir={'maltrieve': 'src'},
       packages=['maltrieve'],

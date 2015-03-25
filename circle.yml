@@ -1,3 +1,4 @@
 test:
   override:
-    - py.test test.py
+    - coverage run --source=maltrieve py.test test.py
+    - coveralls
