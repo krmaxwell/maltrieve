@@ -19,25 +19,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/
 
 import argparse
-import feedparser
-import grequests
+import ConfigParser
 import hashlib
 import json
 import logging
 import os
 import pickle
 import re
-import requests
-import tempfile
 import sys
-import ConfigParser
-import magic
-
+import tempfile
 from urlparse import urlparse
+
+import feedparser
+import grequests
+import magic
+import requests
 from bs4 import BeautifulSoup
 
 
 class config:
+
+    """ Class for holding global configuration setup """
 
     def __init__(self, args, filename='maltrieve.cfg'):
         self.configp = ConfigParser.ConfigParser()
@@ -65,6 +67,7 @@ class config:
         if self.configp.has_option('Maltrieve', 'User-Agent'):
             self.useragent = {'User-Agent': self.configp.get('Maltrieve', 'User-Agent')}
         else:
+            # Default to IE 9
             self.useragent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
 
         self.sort_mime = args.sort_mime
@@ -101,6 +104,7 @@ class config:
 
         logging.info('Using {dir} as dump directory'.format(dir=self.dumpdir))
 
+        # TODO: Merge these
         self.vxcage = args.vxcage or self.configp.has_option('Maltrieve', 'vxcage')
         self.cuckoo = args.cuckoo or self.configp.has_option('Maltrieve', 'cuckoo')
         self.viper = args.viper or self.configp.has_option('Maltrieve', 'viper')
@@ -171,9 +175,10 @@ def save_malware(response, cfg):
     md5 = hashlib.md5(data).hexdigest()
     logging.info("{url} hashes to {md5}".format(url=url, md5=md5))
 
-    # Assume that if viper or vxcage then we dont need to write to file as well.
+    # Assume that external repo means we don't need to write to file as well.
     stored = False
     # Submit to external services
+    # TODO: merge these
     if cfg['vxcage']:
         upload_vxcage(response, md5, cfg)
         stored = True
@@ -291,6 +296,7 @@ def main():
 
     print "Processing source URLs"
 
+    # TODO: Replace with plugins
     source_urls = {'https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries': process_xml_list_desc,
                    'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
                    'http://malc0de.com/rss/': process_xml_list_desc,
@@ -300,7 +306,7 @@ def main():
                    'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list}
     headers = {'User-Agent': 'Maltrieve'}
 
-    reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg['proxy']) for url in source_urls]
+    reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg.proxy) for url in source_urls]
     source_lists = grequests.map(reqs)
 
     print "Completed source processing"
@@ -327,6 +333,7 @@ def main():
 
     print "Completed downloads"
 
+    # TODO: move to functions
     if past_urls:
         logging.info('Dumping past URLs to file')
         with open('urls.json', 'w') as urlfile:
