@@ -17,7 +17,7 @@ setup(name='maltrieve',
           'python-magic==0.4.6',
           'requests==2.3.0',
           'wsgiref==0.1.2',
-          'precommit',
+          'pre-commit',
           'pytest'
       ],
       package_dir={'maltrieve': 'src'},
