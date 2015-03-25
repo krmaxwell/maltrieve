@@ -187,11 +187,11 @@ def save_malware(response, cfg):
         if cfg['sort_mime']:
             # set folder per mime_type
             sort_folder = mime_type.replace('/', '_')
-            if not os.path.exists(os.path.join(directory, sort_folder)):
-                os.makedirs(os.path.join(directory, sort_folder))
-            store_path = os.path.join(directory, sort_folder, md5)
+            if not os.path.exists(os.path.join(cfg.dumpdir, sort_folder)):
+                os.makedirs(os.path.join(cfg.dumpdir, sort_folder))
+            store_path = os.path.join(cfg.dumpdir, sort_folder, md5)
         else:
-            store_path = os.path.join(directory, md5)
+            store_path = os.path.join(cfg.dumpdir, md5)
         with open(store_path, 'wb') as f:
             f.write(data)
             logging.info("Saved {md5} to dump dir".format(md5=md5))
