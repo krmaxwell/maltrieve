@@ -99,12 +99,13 @@ class config:
                 self.dumpdir = '/tmp/malware'
 
         try:
-            f = tempfile.mkstemp(dir=self.dumpdir)
+            fd, temp_path = tempfile.mkstemp(dir=self.dumpdir)
         except IOError:
             logging.error('Could not open {dir} for writing, using default'.format(dir=self.dumpdir))
             self.dumpdir = '/tmp/malware'
         else:
-            os.remove(f)
+            os.close(fd)
+            os.remove(temp_path)
 
         logging.info('Using {dir} as dump directory'.format(dir=self.dumpdir))
 
