@@ -29,12 +29,13 @@ import re
 import resource
 import sys
 import tempfile
+from urlparse import urlparse
+
 import feedparser
 import grequests
 import magic
 import requests
 from bs4 import BeautifulSoup
-from urlparse import urlparse
 
 
 class config:
@@ -280,6 +281,15 @@ def setup_args(args):
     return parser.parse_args(args)
 
 
+def load_hashes(filename="hashes.json"):
+    if os.path.exists(filename):
+        with open(filename, 'rb') as hashfile:
+            hashes = set(json.load(hashfile))
+    else:
+        hashes = set()
+    return hashes
+
+
 def main():
     resource.setrlimit(resource.RLIMIT_NOFILE, (2048, 2048))
     hashes = set()
@@ -288,18 +298,14 @@ def main():
     args = setup_args(sys.argv)
     cfg = config(args, 'maltrieve.cfg')
 
+    # TODO: move this inside config.__init__()
     if cfg.proxy:
         logging.info('Using proxy {proxy}'.format(proxy=cfg.proxy))
         my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg.proxy).text
         logging.info('External sites see {ip}'.format(ip=my_ip))
         print 'External sites see {ip}'.format(ip=my_ip)
 
-    if os.path.exists('hashes.json'):
-        with open('hashes.json', 'rb') as hashfile:
-            hashes = json.load(hashfile)
-    elif os.path.exists('hashes.obj'):
-        with open('hashes.obj', 'rb') as hashfile:
-            hashes = pickle.load(hashfile)
+    hashes = load_hashes('hashes.json')
 
     if os.path.exists('urls.json'):
         try:

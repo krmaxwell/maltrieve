@@ -33,3 +33,8 @@ def test_parse_xml_desc():
     source = requests.get('http://xwell.org/assets/maltrieve-test-desc.xml').text
     assert maltrieve.process_xml_list_desc(source) == \
         set(['http://example.org/mylist', 'http://example.com/yourlist'])
+
+
+def test_load_hashes():
+    assert maltrieve.load_hashes('test-hashes.json') == \
+        set(['d41d8cd98f00b204e9800998ecf8427e'])
