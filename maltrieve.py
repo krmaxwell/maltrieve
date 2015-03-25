@@ -193,15 +193,15 @@ def save_malware(response, cfg):
     stored = False
     # Submit to external services
     # TODO: merge these
-    if cfg['vxcage']:
+    if cfg.vxcage:
         stored = upload_vxcage(response, md5, cfg) or stored
-    if cfg['cuckoo']:
+    if cfg.cuckoo:
         stored = upload_cuckoo(response, md5, cfg) or stored
-    if cfg['viper']:
+    if cfg.viper:
         stored = upload_viper(response, md5, cfg) or stored
     # else save to disk
     if not stored:
-        if cfg['sort_mime']:
+        if cfg.sort_mime:
             # set folder per mime_type
             sort_folder = mime_type.replace('/', '_')
             if not os.path.exists(os.path.join(cfg.dumpdir, sort_folder)):
@@ -283,9 +283,9 @@ def main():
     args = parser.parse_args()
     cfg = config(args, 'maltrieve.cfg')
 
-    if cfg['proxy']:
-        logging.info('Using proxy %s', cfg['proxy'])
-        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg['proxy']).text
+    if cfg.proxy:
+        logging.info('Using proxy {proxy}'.format(proxy=cfg.proxy))
+        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg.proxy).text
         logging.info('External sites see {ip}'.format(ip=my_ip))
         print 'External sites see {ip}'.format(ip=my_ip)
 
