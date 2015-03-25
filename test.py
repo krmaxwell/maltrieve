@@ -14,3 +14,11 @@ def test_saving_args():
     assert args.vxcage
     assert args.cuckoo
     assert args.sort_mime
+
+
+def test_parse_simple_list():
+    sources = 'http://example.org/mylist \
+               http://example.com/yourlist \
+               http://example.org/mylist'
+    assert maltrieve.process_simple_list(sources) == \
+        set('http://example.org/mylist', 'http://example.com/yourlist')
