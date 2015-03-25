@@ -290,6 +290,11 @@ def load_hashes(filename="hashes.json"):
     return hashes
 
 
+def save_hashes(hashes, filename='hashes.json'):
+    with open(filename, 'w') as hashfile:
+        json.dump(list(hashes), hashfile)
+
+
 def main():
     resource.setrlimit(resource.RLIMIT_NOFILE, (2048, 2048))
     hashes = set()
@@ -362,9 +367,7 @@ def main():
         with open('urls.json', 'w') as urlfile:
             json.dump(list(past_urls), urlfile)
 
-    if hashes:
-        with open('hashes.json', 'w') as hashfile:
-            json.dump(hashes, hashfile)
+    save_hashes(hashes, 'hashes.json')
 
 
 if __name__ == "__main__":

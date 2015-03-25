@@ -36,5 +36,11 @@ def test_parse_xml_desc():
 
 
 def test_load_hashes():
-    assert maltrieve.load_hashes('test-hashes.json') == \
+    assert maltrieve.load_hashes('test-load-hashes.json') == \
         set(['d41d8cd98f00b204e9800998ecf8427e'])
+
+
+def test_save_hashes():
+    hashes = set(['d41d8cd98f00b204e9800998ecf8427e'])
+    maltrieve.save_hashes(hashes, 'test-save-hashes.json')
+    test_load_hashes()
