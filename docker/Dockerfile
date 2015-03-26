@@ -36,7 +36,8 @@ RUN rm -rf /var/lib/apt/lists/* && \
 WORKDIR /home
 RUN git clone https://github.com/krmaxwell/maltrieve.git && \
   cd maltrieve && \
-  python setup.py install && \
+  git checkout dev && \
+  pip install -e . && \
   chown -R maltrieve:maltrieve /home/maltrieve
 
 USER maltrieve
