@@ -29,12 +29,13 @@ import re
 import resource
 import sys
 import tempfile
+from urlparse import urlparse
+
 import feedparser
 import grequests
 import magic
 import requests
 from bs4 import BeautifulSoup
-from urlparse import urlparse
 
 
 class config:
@@ -285,7 +286,7 @@ def main():
     hashes = set()
     past_urls = set()
 
-    args = setup_args(sys.argv)
+    args = setup_args(sys.argv[1:])
     cfg = config(args, 'maltrieve.cfg')
 
     if cfg.proxy:
