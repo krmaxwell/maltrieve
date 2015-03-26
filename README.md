@@ -1,5 +1,7 @@
 [![Stories in Ready](https://badge.waffle.io/krmaxwell/maltrieve.png?label=ready&title=Ready)](https://waffle.io/krmaxwell/maltrieve)
 [![Stories in In Progress](https://badge.waffle.io/krmaxwell/maltrieve.png?label=in%20progress&title=In%20Progress)](https://waffle.io/krmaxwell/maltrieve)
+[![Circle CI](https://circleci.com/gh/krmaxwell/maltrieve/tree/dev.svg?style=svg)](https://circleci.com/gh/krmaxwell/maltrieve/tree/dev)
+[![Coverage Status](https://coveralls.io/repos/krmaxwell/maltrieve/badge.svg?branch=dev)](https://coveralls.io/r/krmaxwell/maltrieve?branch=dev)
 ```
  _______ _______        _______  ______ _____ _______ _    _ _______
  |  |  | |_____| |         |    |_____/   |   |______  \  /  |______
@@ -12,8 +14,8 @@
 Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mwcrawler). It retrieves malware directly from the sources as listed at a number of sites. Currently we crawl the following:
 
 * [Malc0de](http://malc0de.com/rss)
-* [Malware Black List](http://www.malwareblacklist.com/mbl.xml)
 * [Malware Domain List](http://www.malwaredomainlist.com/hostslist/mdl.xml)
+* [Malware URLs](http://malwareurls.joxeankoret.com/normal.txt)
 * [VX Vault](http://vxvault.siri-urz.net/URL_List.php)
 * [URLquery](http://urlquery.net/)
 * [CleanMX](http://support.clean-mx.de/clean-mx/xmlviruses.php?)
@@ -21,6 +23,7 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 
 These lists will be implemented if/when they return to activity.
 
+* [Malware Blacklist](http://www.malwareblacklist.com/showMDL.php)
 * [NovCon Minotaur](http://minotauranalysis.com/malwarelist-urls.aspx)
 
 Other improvements include:

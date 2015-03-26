@@ -19,29 +19,109 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/
 
 import argparse
+import ConfigParser
 import datetime
-import feedparser
-import grequests
 import hashlib
 import json
 import logging
 import os
 import pickle
 import re
-import requests
-import tempfile
+import resource
 import sys
-import ConfigParser
-import magic
-
+import tempfile
 from urlparse import urlparse
-from threading import Thread
-from Queue import Queue
+
+import feedparser
+import grequests
+import magic
+import requests
 from bs4 import BeautifulSoup
 
-def upload_crits(response, md5, mime_type):
+
+class config:
+
+    """ Class for holding global configuration setup """
+
+    def __init__(self, args, filename='maltrieve.cfg'):
+        self.configp = ConfigParser.ConfigParser()
+        self.configp.read(filename)
+
+        if args.logfile or self.configp.get('Maltrieve', 'logfile'):
+            if args.logfile:
+                self.logfile = args.logfile
+            else:
+                self.logfile = self.configp.get('Maltrieve', 'logfile')
+            logging.basicConfig(filename=self.logfile, level=logging.DEBUG,
+                                format='%(asctime)s %(thread)d %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S')
+        else:
+            logging.basicConfig(level=logging.DEBUG,
+                                format='%(asctime)s %(thread)d %(message)s',
+                                datefmt='%Y-%m-%d %H:%M:%S')
+        if args.proxy:
+            self.proxy = {'http': args.proxy}
+        elif self.configp.has_option('Maltrieve', 'proxy'):
+            self.proxy = {'http': self.configp.get('Maltrieve', 'proxy')}
+        else:
+            self.proxy = None
+
+        if self.configp.has_option('Maltrieve', 'User-Agent'):
+            self.useragent = {'User-Agent': self.configp.get('Maltrieve', 'User-Agent')}
+        else:
+            # Default to IE 9
+            self.useragent = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
+
+        self.sort_mime = args.sort_mime
+
+        if self.configp.has_option('Maltrieve', 'black_list'):
+            self.black_list = self.configp.get('Maltrieve', 'black_list').strip().split(',')
+        else:
+            self.black_list = []
+
+        if self.configp.has_option('Maltrieve', 'white_list'):
+            self.white_list = self.configp.get('Maltrieve', 'white_list').strip().split(',')
+        else:
+            self.white_list = False
+
+        # make sure we can open the directory for writing
+        if args.dumpdir:
+            self.dumpdir = args.dumpdir
+        elif self.configp.get('Maltrieve', 'dumpdir'):
+            self.dumpdir = self.configp.get('Maltrieve', 'dumpdir')
+        else:
+            self.dumpdir = '/tmp/malware'
+
+        # Create the dir
+        if not os.path.exists(self.dumpdir):
+            try:
+                os.makedirs(self.dumpdir)
+            except IOError:
+                logging.error('Could not create {dir}, using default'.format(dir=self.dumpdir))
+                self.dumpdir = '/tmp/malware'
+
+        try:
+            fd, temp_path = tempfile.mkstemp(dir=self.dumpdir)
+        except IOError:
+            logging.error('Could not open {dir} for writing, using default'.format(dir=self.dumpdir))
+            self.dumpdir = '/tmp/malware'
+        else:
+            os.close(fd)
+            os.remove(temp_path)
+
+        logging.info('Using {dir} as dump directory'.format(dir=self.dumpdir))
+
+        # TODO: Merge these
+        self.vxcage = args.vxcage or self.configp.has_option('Maltrieve', 'vxcage')
+        self.cuckoo = args.cuckoo or self.configp.has_option('Maltrieve', 'cuckoo')
+        self.viper = args.viper or self.configp.has_option('Maltrieve', 'viper')
+        self.logheaders = self.configp.get('Maltrieve', 'logheaders')
+
+
+def upload_crits(response, md5, cfg):
     if response:
         url_tag = urlparse(response.url)
+        mime_type = magic.from_buffer(response.content, mime=True)
         files = {'filedata': (md5, response.content)}
         headers = {'User-agent': 'Maltrieve'}
         zip_files = ['application/zip', 'application/gzip', 'application/x-7z-compressed']
@@ -51,11 +131,11 @@ def upload_crits(response, md5, mime_type):
 
         # submit domain / IP
         # TODO: identify if it is a domain or IP and submit accordingly
-        url = "{0}/api/v1/domains/".format(config.get('Maltrieve', 'crits')) 
+        url = "{srv}/api/v1/domains/".format(srv=cfg.crits)
         domain_data = {
-            'api_key': cfg['crits_key'],
-            'username': cfg['crits_user'],
-            'source': cfg['crits_source'],
+            'api_key': cfg.crits_key,
+            'username': cfg.crits_user,
+            'source': cfg.crits_source,
             'domain': url_tag.netloc
         }
         try:
@@ -63,15 +143,15 @@ def upload_crits(response, md5, mime_type):
             domain_response = requests.post(url, headers=headers, data=domain_data, verify=False)
             if domain_response.status_code == requests.codes.ok:
                 domain_response_data = domain_response.json()
-                logging.info("Submitted domain info for %s to Crits, response was %s" % (md5,
-                             domain_response_data["message"]))
-                if domain_response_data['return_code'] == 0: 
+                logging.info("Submitted domain info for {md5} to Crits, response was {msg}".format(md5=md5,
+                                                                                                   msg=domain_response_data["message"]))
+                if domain_response_data['return_code'] == 0:
                     inserted_domain = True
         except:
-            logging.info("Exception caught from Crits when submitting domain")
+            logging.info("Exception caught from CRITs when submitting domain")
 
         # Submit sample
-        url = "{0}/api/v1/samples/".format(config.get('Maltrieve', 'crits'))
+        url = "{srv}/api/v1/samples/".format(srv=cfg.crits)
         if mime_type in zip_files:
             file_type = 'zip'
         elif mime_type in rar_files:
@@ -84,22 +164,21 @@ def upload_crits(response, md5, mime_type):
             'source': cfg['crits_source'],
             'upload_type': 'file',
             'md5': md5,
-            'file_format': file_type # must be type zip, rar, or raw
+            'file_format': file_type  # must be type zip, rar, or raw
         }
         try:
             # Note that this request does NOT go through proxies
             sample_response = requests.post(url, headers=headers, files=files, data=sample_data, verify=False)
             if sample_response.status_code == requests.codes.ok:
                 sample_response_data = sample_response.json()
-                logging.info("Submitted sample info for %s to Crits, response was %s" % (md5,
-                         sample_response_data["message"]))
+                logging.info("Submitted sample info for {md5} to CRITs".format(md5=md5))
                 if sample_response_data['return_code'] == 0:
                     inserted_sample = True
         except:
             logging.info("Exception caught from Crits when submitting sample")
 
-        # Create a relationship for the sample and domain        
-        url = "{0}/api/v1/relationships/".format(config.get('Maltrieve', 'crits'))
+        # Create a relationship for the sample and domain
+        url = "{srv}/api/v1/relationships/".format(src=cfg.crits)
         if (inserted_sample and inserted_domain):
             relationship_data = {
                 'api_key': cfg['crits_key'],
@@ -117,112 +196,113 @@ def upload_crits(response, md5, mime_type):
                 # Note that this request does NOT go through proxies
                 relationship_response = requests.post(url, headers=headers, data=relationship_data, verify=False)
                 if relationship_response.status_code == requests.codes.ok:
-                    relationship_response_data = relationship_response.json()
-                    logging.info("Submitted relationship info for %s to Crits, response was %s" % (md5,
-                                 relationship_response_data["message"]))
+                    logging.info("Submitted relationship info for {md5} to CRITs".format(md5=md5))
             except:
-                logging.info("Relationship submission skipped. \n    Domain was %s\n    Sample response was %s\n    Domain response was %s\n" % (url_tag.netloc, sample_response.status_code, domain_response.status_code))
+                # TODO: need informative but still shorter message
+                logging.info("Relationship submission skipped.")
         else:
             logging.info("Skipping adding relationship. CRITs could not process domain or sample.")
 
 
-def upload_vxcage(response, md5):
+def upload_vxcage(response, md5, cfg):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
         tags = {'tags': url_tag.netloc + ',Maltrieve'}
-        url = "{0}/malware/add".format(config.get('Maltrieve', 'vxcage'))
+        url = "{srv}/malware/add".format(cfg.vxcage)
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
             response = requests.post(url, headers=headers, files=files, data=tags)
             response_data = response.json()
-            logging.info("Submitted %s to VxCage, response was %s" % (md5,
-                         response_data["message"]))
-        except:
-            logging.info("Exception caught from VxCage")
+            logging.info("Submitted {md5} to VxCage, response was {msg}".format(md5=md5, msg=response_data["message"]))
+        except requests.exceptions.ConnectionError:
+            logging.info("Could not connect to VxCage, will attempt local storage")
+            return False
+        else:
+            return True
 
 
 # This gives cuckoo the URL instead of the file.
-def upload_cuckoo(response, md5):
+def upload_cuckoo(response, md5, cfg):
     if response:
         data = {'url': response.url}
-        url = "{0}/tasks/create/url".format(config.get('Maltrieve', 'cuckoo'))
+        url = "{srv}/tasks/create/url".format(srv=cfg.cuckoo)
         headers = {'User-agent': 'Maltrieve'}
-        #try:
-        response = requests.post(url, headers=headers, data=data)
-        response_data = response.json()
-        logging.info("Submitted %s to Cuckoo, task ID %s", md5, response_data["task_id"])
-        #except:
-            #logging.info("Exception caught from Cuckoo")
+        try:
+            response = requests.post(url, headers=headers, data=data)
+            response_data = response.json()
+            logging.info("Submitted {md5} to Cuckoo, task ID {taskid}".format(md5=md5, taskid=response_data["task_id"]))
+        except requests.exceptions.ConnectionError:
+            logging.info("Could not connect to Cuckoo, will attempt local storage")
+            return False
+        else:
+            return True
 
 
-def upload_viper(response, md5):
+def upload_viper(response, md5, cfg):
     if response:
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
         tags = {'tags': url_tag.netloc + ',Maltrieve'}
-        url = "{0}/file/add".format(config.get('Maltrieve', 'viper'))
+        url = "{srv}/file/add".format(srv=cfg.viper)
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
             response = requests.post(url, headers=headers, files=files, data=tags)
             response_data = response.json()
-            logging.info("Submitted %s to Viper, response was %s" % (md5,
-                         response_data["message"]))
-        except:
-            logging.info("Exception caught from Viper")
+            logging.info("Submitted {md5} to Viper, response was {msg}".format(md5=md5, msg=response_data["message"]))
+        except requests.exceptions.ConnectionError:
+            logging.info("Could not connect to Viper, will attempt local storage")
+            return False
+        else:
+            return True
 
 
-def exception_handler(request, exception):
-    logging.info("Request for %s failed: %s" % (request, exception))
-
-
-def save_malware(response, directory, black_list, white_list):
+def save_malware(response, cfg):
     url = response.url
     data = response.content
     mime_type = magic.from_buffer(data, mime=True)
-    if mime_type in black_list:
-        logging.info('%s in ignore list for %s', mime_type, url)
+    if mime_type in cfg.black_list:
+        logging.info('{mtype} in ignore list for {url}'.format(mtype=mime_type, url=url))
         return
-    if white_list:
-        if mime_type in white_list:
+    if cfg.white_list:
+        if mime_type in cfg.white_list:
             pass
         else:
-            logging.info('%s not in whitelist for %s', mime_type, url)
+            logging.info('{mtype} not in whitelist for {url}'.format(mtype=mime_type, url=url))
             return
 
     # Hash and log
     md5 = hashlib.md5(data).hexdigest()
-    logging.info("%s hashes to %s" % (url, md5))
+    logging.info("{url} hashes to {md5}".format(url=url, md5=md5))
 
-    # Assume that if viper or vxcage then we dont need to write to file as well.
+    # Assume that external repo means we don't need to write to file as well.
     stored = False
     # Submit to external services
-    if cfg['vxcage']:
-        upload_vxcage(response, md5)
-        stored = True
-    if cfg['cuckoo']:
-        upload_cuckoo(response, md5)
-    if cfg['viper']:
-        upload_viper(response, md5)
-        stored = True
-    if cfg['crits']:
-        upload_crits(response, md5, mime_type)
-        stored = True
+
+    # TODO: merge these
+    if cfg.vxcage:
+        stored = upload_vxcage(response, md5, cfg) or stored
+    if cfg.cuckoo:
+        stored = upload_cuckoo(response, md5, cfg) or stored
+    if cfg.viper:
+        stored = upload_viper(response, md5, cfg) or stored
+    if cfg.crits:
+        stored = upload_crits(response, md5, cfg) or stored
     # else save to disk
     if not stored:
-        if cfg['sort_mime']:
+        if cfg.sort_mime:
             # set folder per mime_type
             sort_folder = mime_type.replace('/', '_')
-            if not os.path.exists(os.path.join(directory, sort_folder)):
-                os.makedirs(os.path.join(directory, sort_folder))
-            store_path = os.path.join(directory, sort_folder, md5)
+            if not os.path.exists(os.path.join(cfg.dumpdir, sort_folder)):
+                os.makedirs(os.path.join(cfg.dumpdir, sort_folder))
+            store_path = os.path.join(cfg.dumpdir, sort_folder, md5)
         else:
-            store_path = os.path.join(directory, md5)
+            store_path = os.path.join(cfg.dumpdir, md5)
         with open(store_path, 'wb') as f:
             f.write(data)
-            logging.info("Saved %s to dump dir" % md5)
+            logging.info("Saved {md5} to dump dir".format(md5=md5))
     return True
 
 
@@ -269,13 +349,7 @@ def chunker(seq, size):
     return (seq[pos:pos + size] for pos in xrange(0, len(seq), size))
 
 
-def main():
-    global hashes
-    hashes = set()
-    past_urls = set()
-
-    now = datetime.datetime.now()
-
+def setup_args(args):
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--proxy",
                         help="Define HTTP proxy as address:port")
@@ -297,89 +371,22 @@ def main():
     parser.add_argument("-s", "--sort_mime",
                         help="Sort files by MIME type", action="store_true", default=False)
 
-    global cfg
-    cfg = dict()
-    args = parser.parse_args()
+    return parser.parse_args(args)
 
-    global config
-    config = ConfigParser.ConfigParser()
-    config.read('maltrieve.cfg')
 
-    if args.logfile or config.get('Maltrieve', 'logfile'):
-        if args.logfile:
-            cfg['logfile'] = args.logfile
-        else:
-            cfg['logfile'] = config.get('Maltrieve', 'logfile')
-        logging.basicConfig(filename=cfg['logfile'], level=logging.DEBUG,
-                            format='%(asctime)s %(thread)d %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S')
-    else:
-        logging.basicConfig(level=logging.DEBUG,
-                            format='%(asctime)s %(thread)d %(message)s',
-                            datefmt='%Y-%m-%d %H:%M:%S')
+def main():
+    resource.setrlimit(resource.RLIMIT_NOFILE, (2048, 2048))
+    hashes = set()
+    past_urls = set()
 
-    if args.proxy:
-        cfg['proxy'] = {'http': args.proxy}
-    elif config.has_option('Maltrieve', 'proxy'):
-        cfg['proxy'] = {'http': config.get('Maltrieve', 'proxy')}
-    else:
-        cfg['proxy'] = None
+    args = setup_args(sys.argv)
+    cfg = config(args, 'maltrieve.cfg')
 
-    if config.has_option('Maltrieve', 'User-Agent'):
-        cfg['User-Agent'] = {'User-Agent': config.get('Maltrieve', 'User-Agent')}
-    else:
-        cfg['User-Agent'] = "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 7.1; Trident/5.0)"
-
-    cfg['sort_mime'] = args.sort_mime
-
-    if cfg['proxy']:
-        logging.info('Using proxy %s', cfg['proxy'])
-        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg['proxy']).text
-        logging.info('External sites see %s', my_ip)
-        print "External sites see %s" % my_ip
-
-    cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
-    cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
-    cfg['viper'] = args.viper or config.has_option('Maltrieve', 'viper')
-    cfg['logheaders'] = config.get('Maltrieve', 'logheaders') 
-
-    # See if crits is configured. If so add config options for User/API
-    cfg['crits'] = args.crits or config.has_option('Maltrieve', 'crits')
-    if cfg['crits']:
-        cfg['crits_user'] = config.get('Maltrieve', 'crits_user')
-        cfg['crits_key'] = config.get('Maltrieve', 'crits_key')
-        cfg['crits_source'] = config.get('Maltrieve', 'crits_source')
-
-    black_list = []
-    if config.has_option('Maltrieve', 'black_list'):
-        black_list = config.get('Maltrieve', 'black_list').strip().split(',')
-
-    white_list = False
-    if config.has_option('Maltrieve', 'white_list'):
-        white_list = config.get('Maltrieve', 'white_list').strip().split(',')
-
-    # make sure we can open the directory for writing
-    if args.dumpdir:
-        cfg['dumpdir'] = args.dumpdir
-    elif config.get('Maltrieve', 'dumpdir'):
-        cfg['dumpdir'] = config.get('Maltrieve', 'dumpdir')
-    else:
-        cfg['dumpdir'] = '/tmp/malware'
-
-    # Create the dir
-    if not os.path.exists(cfg['dumpdir']):
-        os.makedirs(cfg['dumpdir'])
-
-    try:
-        d = tempfile.mkdtemp(dir=cfg['dumpdir'])
-    except Exception as e:
-        logging.error('Could not open %s for writing (%s), using default',
-                      cfg['dumpdir'], e)
-        cfg['dumpdir'] = '/tmp/malware'
-    else:
-        os.rmdir(d)
-
-    logging.info('Using %s as dump directory', cfg['dumpdir'])
+    if cfg.proxy:
+        logging.info('Using proxy {proxy}'.format(proxy=cfg.proxy))
+        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg.proxy).text
+        logging.info('External sites see {ip}'.format(ip=my_ip))
+        print 'External sites see {ip}'.format(ip=my_ip)
 
     if os.path.exists('hashes.json'):
         with open('hashes.json', 'rb') as hashfile:
@@ -400,6 +407,7 @@ def main():
 
     print "Processing source URLs"
 
+    # TODO: Replace with plugins
     source_urls = {'https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries': process_xml_list_desc,
                    'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
                    'http://malc0de.com/rss/': process_xml_list_desc,
@@ -409,12 +417,12 @@ def main():
                    'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list}
     headers = {'User-Agent': 'Maltrieve'}
 
-    reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg['proxy']) for url in source_urls]
+    reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg.proxy) for url in source_urls]
     source_lists = grequests.map(reqs)
 
     print "Completed source processing"
 
-    headers['User-Agent'] = cfg['User-Agent']
+    headers['User-Agent'] = cfg.useragent
     malware_urls = set()
     for response in source_lists:
         if hasattr(response, 'status_code') and response.status_code == 200:
@@ -423,19 +431,20 @@ def main():
     print "Downloading samples, check log for details"
 
     malware_urls -= past_urls
-    reqs = [grequests.get(url, headers=headers, proxies=cfg['proxy']) for url in malware_urls]
+    reqs = [grequests.get(url, headers=headers, proxies=cfg.proxy) for url in malware_urls]
     for chunk in chunker(reqs, 32):
         malware_downloads = grequests.map(chunk)
         for each in malware_downloads:
             if not each or each.status_code != 200:
                 continue
-            md5 = save_malware(each, cfg['dumpdir'], black_list, white_list)
+            md5 = save_malware(each, cfg)
             if not md5:
                 continue
             past_urls.add(each.url)
 
     print "Completed downloads"
 
+    # TODO: move to functions
     if past_urls:
         logging.info('Dumping past URLs to file')
         with open('urls.json', 'w') as urlfile:
