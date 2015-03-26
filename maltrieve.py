@@ -110,12 +110,18 @@ class config:
             os.remove(temp_path)
 
         logging.info('Using {dir} as dump directory'.format(dir=self.dumpdir))
+        self.logheaders = self.configp.get('Maltrieve', 'logheaders')
 
         # TODO: Merge these
         self.vxcage = args.vxcage or self.configp.has_option('Maltrieve', 'vxcage')
         self.cuckoo = args.cuckoo or self.configp.has_option('Maltrieve', 'cuckoo')
         self.viper = args.viper or self.configp.has_option('Maltrieve', 'viper')
-        self.logheaders = self.configp.get('Maltrieve', 'logheaders')
+
+        # CRITs
+        self.crits = args.crits or self.configp.has_option('Maltrieve', 'crits')
+        self.crits_user = self.configp.has_option('Maltrieve', 'crits_user')
+        self.crits_key = self.configp.has_option('Maltrieve', 'crits_key')
+        self.crits_source = self.configp.has_option('Maltrieve', 'crits_source')
 
 
 def upload_crits(response, md5, cfg):
@@ -143,12 +149,12 @@ def upload_crits(response, md5, cfg):
             domain_response = requests.post(url, headers=headers, data=domain_data, verify=False)
             if domain_response.status_code == requests.codes.ok:
                 domain_response_data = domain_response.json()
-                logging.info("Submitted domain info for {md5} to Crits, response was {msg}".format(md5=md5,
+                logging.info("Submitted domain info for {md5} to CRITs, response was {msg}".format(md5=md5,
                                                                                                    msg=domain_response_data["message"]))
                 if domain_response_data['return_code'] == 0:
                     inserted_domain = True
         except:
-            logging.info("Exception caught from CRITs when submitting domain")
+            logging.info("Exception caught from CRITs when submitting domain: {code}".format(code=domain_response.status_code))
 
         # Submit sample
         url = "{srv}/api/v1/samples/".format(srv=cfg.crits)
@@ -159,9 +165,9 @@ def upload_crits(response, md5, cfg):
         else:
             file_type = 'raw'
         sample_data = {
-            'api_key': cfg['crits_key'],
-            'username': cfg['crits_user'],
-            'source': cfg['crits_source'],
+            'api_key': cfg.crits_key,
+            'username': cfg.crits_user,
+            'source': cfg.crits_source,
             'upload_type': 'file',
             'md5': md5,
             'file_format': file_type  # must be type zip, rar, or raw
@@ -175,15 +181,15 @@ def upload_crits(response, md5, cfg):
                 if sample_response_data['return_code'] == 0:
                     inserted_sample = True
         except:
-            logging.info("Exception caught from Crits when submitting sample")
+            logging.info("Exception caught from CRITs when submitting sample: {code}".format(code=sample_response.status_code))
 
         # Create a relationship for the sample and domain
-        url = "{srv}/api/v1/relationships/".format(src=cfg.crits)
+        url = "{srv}/api/v1/relationships/".format(srv=cfg.crits)
         if (inserted_sample and inserted_domain):
             relationship_data = {
-                'api_key': cfg['crits_key'],
-                'username': cfg['crits_user'],
-                'source': cfg['crits_source'],
+                'api_key': cfg.crits_key,
+                'username': cfg.crits_user,
+                'source': cfg.crits_source,
                 'right_type': domain_response_data['type'],
                 'right_id': domain_response_data['id'],
                 'left_type': sample_response_data['type'],
@@ -379,7 +385,7 @@ def main():
     hashes = set()
     past_urls = set()
 
-    args = setup_args(sys.argv)
+    args = setup_args(sys.argv[1:])
     cfg = config(args, 'maltrieve.cfg')
 
     if cfg.proxy:
