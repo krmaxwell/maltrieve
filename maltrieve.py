@@ -39,6 +39,92 @@ from threading import Thread
 from Queue import Queue
 from bs4 import BeautifulSoup
 
+def upload_crits(response, md5, mime_type):
+    if response:
+        url_tag = urlparse(response.url)
+        files = {'filedata': (md5, response.content)}
+        headers = {'User-agent': 'Maltrieve'}
+        zip_files = ['application/zip', 'application/gzip', 'application/x-7z-compressed']
+        rar_files = ['application/x-rar-compressed']
+        inserted_domain = False
+        inserted_sample = False
+
+        # submit domain / IP
+        # TODO: identify if it is a domain or IP and submit accordingly
+        url = "{0}/api/v1/domains/".format(config.get('Maltrieve', 'crits')) 
+        domain_data = {
+            'api_key': cfg['crits_key'],
+            'username': cfg['crits_user'],
+            'source': cfg['crits_source'],
+            'domain': url_tag.netloc
+        }
+        try:
+            # Note that this request does NOT go through proxies
+            domain_response = requests.post(url, headers=headers, data=domain_data, verify=False)
+            if domain_response.status_code == requests.codes.ok:
+                domain_response_data = domain_response.json()
+                logging.info("Submitted domain info for %s to Crits, response was %s" % (md5,
+                             domain_response_data["message"]))
+                if domain_response_data['return_code'] == 0: 
+                    inserted_domain = True
+        except:
+            logging.info("Exception caught from Crits when submitting domain")
+
+        # Submit sample
+        url = "{0}/api/v1/samples/".format(config.get('Maltrieve', 'crits'))
+        if mime_type in zip_files:
+            file_type = 'zip'
+        elif mime_type in rar_files:
+            file_type = 'rar'
+        else:
+            file_type = 'raw'
+        sample_data = {
+            'api_key': cfg['crits_key'],
+            'username': cfg['crits_user'],
+            'source': cfg['crits_source'],
+            'upload_type': 'file',
+            'md5': md5,
+            'file_format': file_type # must be type zip, rar, or raw
+        }
+        try:
+            # Note that this request does NOT go through proxies
+            sample_response = requests.post(url, headers=headers, files=files, data=sample_data, verify=False)
+            if sample_response.status_code == requests.codes.ok:
+                sample_response_data = sample_response.json()
+                logging.info("Submitted sample info for %s to Crits, response was %s" % (md5,
+                         sample_response_data["message"]))
+                if sample_response_data['return_code'] == 0:
+                    inserted_sample = True
+        except:
+            logging.info("Exception caught from Crits when submitting sample")
+
+        # Create a relationship for the sample and domain        
+        url = "{0}/api/v1/relationships/".format(config.get('Maltrieve', 'crits'))
+        if (inserted_sample and inserted_domain):
+            relationship_data = {
+                'api_key': cfg['crits_key'],
+                'username': cfg['crits_user'],
+                'source': cfg['crits_source'],
+                'right_type': domain_response_data['type'],
+                'right_id': domain_response_data['id'],
+                'left_type': sample_response_data['type'],
+                'left_id': sample_response_data['id'],
+                'rel_type': 'Downloaded_From',
+                'rel_confidence': 'high',
+                'rel_date': datetime.datetime.now()
+            }
+            try:
+                # Note that this request does NOT go through proxies
+                relationship_response = requests.post(url, headers=headers, data=relationship_data, verify=False)
+                if relationship_response.status_code == requests.codes.ok:
+                    relationship_response_data = relationship_response.json()
+                    logging.info("Submitted relationship info for %s to Crits, response was %s" % (md5,
+                                 relationship_response_data["message"]))
+            except:
+                logging.info("Relationship submission skipped. \n    Domain was %s\n    Sample response was %s\n    Domain response was %s\n" % (url_tag.netloc, sample_response.status_code, domain_response.status_code))
+        else:
+            logging.info("Skipping adding relationship. CRITs could not process domain or sample.")
+
 
 def upload_vxcage(response, md5):
     if response:
@@ -121,6 +207,9 @@ def save_malware(response, directory, black_list, white_list):
     if cfg['viper']:
         upload_viper(response, md5)
         stored = True
+    if cfg['crits']:
+        upload_crits(response, md5, mime_type)
+        stored = True
     # else save to disk
     if not stored:
         if cfg['sort_mime']:
@@ -194,11 +283,14 @@ def main():
                         help="Define dump directory for retrieved files")
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
-    parser.add_argument("-x", "--vxcage",
-                        help="Dump the files to a VxCage instance",
+    parser.add_argument("-r", "--crits",
+                        help="Dump the file to a Crits instance.",
                         action="store_true", default=False)
     parser.add_argument("-v", "--viper",
                         help="Dump the files to a Viper instance",
+                        action="store_true", default=False)
+    parser.add_argument("-x", "--vxcage",
+                        help="Dump the file to a VxCage instance",
                         action="store_true", default=False)
     parser.add_argument("-c", "--cuckoo",
                         help="Enable Cuckoo analysis", action="store_true", default=False)
@@ -249,7 +341,14 @@ def main():
     cfg['vxcage'] = args.vxcage or config.has_option('Maltrieve', 'vxcage')
     cfg['cuckoo'] = args.cuckoo or config.has_option('Maltrieve', 'cuckoo')
     cfg['viper'] = args.viper or config.has_option('Maltrieve', 'viper')
-    cfg['logheaders'] = config.get('Maltrieve', 'logheaders')
+    cfg['logheaders'] = config.get('Maltrieve', 'logheaders') 
+
+    # See if crits is configured. If so add config options for User/API
+    cfg['crits'] = args.crits or config.has_option('Maltrieve', 'crits')
+    if cfg['crits']:
+        cfg['crits_user'] = config.get('Maltrieve', 'crits_user')
+        cfg['crits_key'] = config.get('Maltrieve', 'crits_key')
+        cfg['crits_source'] = config.get('Maltrieve', 'crits_source')
 
     black_list = []
     if config.has_option('Maltrieve', 'black_list'):

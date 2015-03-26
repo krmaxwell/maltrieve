@@ -63,6 +63,7 @@ optional arguments:
                         Define file for logging progress
   -x, --vxcage          Dump the files to a VxCage instance
   -v, --viper           Dump the files to a Viper instance
+  -r, --crits           Dump the file and domain to a CRITs instance
   -c, --cuckoo          Enable Cuckoo analysis
   -s, --sort_mime       Sort files by MIME type
 
