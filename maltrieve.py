@@ -29,12 +29,13 @@ import re
 import resource
 import sys
 import tempfile
+from urlparse import urlparse
+
 import feedparser
 import grequests
 import magic
 import requests
 from bs4 import BeautifulSoup
-from urlparse import urlparse
 
 
 class config:
