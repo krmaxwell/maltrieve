@@ -10,9 +10,7 @@
 #
 # To run this image after installing Docker, use a command like this:
 #
-# sudo docker run --rm -it technoskald/maltrieve bash
-#
-# then run maltrieve.py with the desired parameters.
+# sudo docker run --rm -it technoskald/maltrieve
 
 FROM ubuntu:14.04
 MAINTAINER Michael Boman <michael@michaelboman.org>
@@ -40,8 +38,12 @@ RUN git clone https://github.com/krmaxwell/maltrieve.git && \
   pip install -e . && \
   chown -R maltrieve:maltrieve /home/maltrieve
 
+RUN mkdir /archive && \
+  chown maltrieve:maltrieve /archive
+
 USER maltrieve
 ENV HOME /home/maltrieve
 ENV USER maltrieve
 WORKDIR /home/maltrieve
-CMD ["maltrieve"]
+ENTRYPOINT ["maltrieve"]
+CMD ["-d", "/archive/samples", "-l", "/archive/maltrieve.log"]
