@@ -1,0 +1,4 @@
+test:
+  override:
+    - py.test --cov maltrieve test.py
+    - coveralls
