@@ -285,7 +285,7 @@ def main():
     hashes = set()
     past_urls = set()
 
-    args = setup_args(sys.argv)
+    args = setup_args(sys.argv[1:])
     cfg = config(args, 'maltrieve.cfg')
 
     if cfg.proxy:
