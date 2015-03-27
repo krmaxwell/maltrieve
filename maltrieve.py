@@ -118,10 +118,10 @@ class config:
         self.viper = args.viper or self.configp.has_option('Maltrieve', 'viper')
 
         # CRITs
-        self.crits = args.crits or self.configp.has_option('Maltrieve', 'crits')
-        self.crits_user = self.configp.has_option('Maltrieve', 'crits_user')
-        self.crits_key = self.configp.has_option('Maltrieve', 'crits_key')
-        self.crits_source = self.configp.has_option('Maltrieve', 'crits_source')
+        self.crits = args.crits or self.configp.get('Maltrieve', 'crits')
+        self.crits_user = self.configp.get('Maltrieve', 'crits_user')
+        self.crits_key = self.configp.get('Maltrieve', 'crits_key')
+        self.crits_source = self.configp.get('Maltrieve', 'crits_source')
 
 
 def upload_crits(response, md5, cfg):
@@ -146,15 +146,20 @@ def upload_crits(response, md5, cfg):
         }
         try:
             # Note that this request does NOT go through proxies
-            domain_response = requests.post(url, headers=headers, data=domain_data, verify=False)
+            logging.debug("Domain submission: {url}|{data}".format(url=url, data=domain_data))
+            domain_response = requests.post(url, headers=headers, data=domain_data)
+            # pylint says "Instance of LookupDict has no 'ok' member"
             if domain_response.status_code == requests.codes.ok:
                 domain_response_data = domain_response.json()
-                logging.info("Submitted domain info for {md5} to CRITs, response was {msg}".format(md5=md5,
-                                                                                                   msg=domain_response_data["message"]))
                 if domain_response_data['return_code'] == 0:
                     inserted_domain = True
+                else:
+                    logging.info("Submitted domain info for {md5} to CRITs, response was {data}".format(md5=md5,
+                                                                                                        data=domain_response_data))
+            else:
+                logging.info("Submission of {url} failed: {code}".format(url=url, code=domain_response.status_code))
         except:
-            logging.info("Exception caught from CRITs when submitting domain: {code}".format(code=domain_response.status_code))
+            logging.info("Exception caught from CRITs when submitting domain: {response}".format(code=domain_response))
 
         # Submit sample
         url = "{srv}/api/v1/samples/".format(srv=cfg.crits)
@@ -175,6 +180,7 @@ def upload_crits(response, md5, cfg):
         try:
             # Note that this request does NOT go through proxies
             sample_response = requests.post(url, headers=headers, files=files, data=sample_data, verify=False)
+            # pylint says "Instance of LookupDict has no 'ok' member"
             if sample_response.status_code == requests.codes.ok:
                 sample_response_data = sample_response.json()
                 logging.info("Submitted sample info for {md5} to CRITs".format(md5=md5))
@@ -201,6 +207,7 @@ def upload_crits(response, md5, cfg):
             try:
                 # Note that this request does NOT go through proxies
                 relationship_response = requests.post(url, headers=headers, data=relationship_data, verify=False)
+                # pylint says "Instance of LookupDict has no 'ok' member"
                 if relationship_response.status_code == requests.codes.ok:
                     logging.info("Submitted relationship info for {md5} to CRITs".format(md5=md5))
             except:
