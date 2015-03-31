@@ -79,6 +79,24 @@ optional arguments:
 ### Configuration File
 Many of Maltrieve's command line options can be specified in ```maltrieve.cfg```.
 
+## Automated Execution (Optional)
+Cron can be used to automate the execution of Maltrieve. The following example is provided to help get you started. It will create a cron job that will run Maltrieve every day at 2:01 as a standard user. That said, we recommend enhancing this by creating a custom script for production environments. 
+
+### Ubuntu
+As a user execute
+```
+crontab -e
+```
+If installed normally, add the following to the end of the file.
+```
+01 02 * * * maltrieve <optional flags>
+```
+If downloaded to a folder and executed, add the following to the end of the file.
+```
+01 02 * * * cd </folder/location> && /usr/bin/python maltrieve.py <optional flags>
+```
+### Redhat
+Redhat systems will need to ensure that the user is added to the /etc/cron.allow file. 
 
 ## License
 
