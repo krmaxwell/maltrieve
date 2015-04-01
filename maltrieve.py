@@ -118,10 +118,13 @@ class config(object):
         self.viper = args.viper or self.configp.has_option('Maltrieve', 'viper')
 
         # CRITs
-        self.crits = args.crits or self.configp.get('Maltrieve', 'crits')
-        self.crits_user = self.configp.get('Maltrieve', 'crits_user')
-        self.crits_key = self.configp.get('Maltrieve', 'crits_key')
-        self.crits_source = self.configp.get('Maltrieve', 'crits_source')
+        if args.crits or self.configp.has_option('Maltrieve', 'crits'):
+            self.crits = args.crits or self.configp.get('Maltrieve', 'crits')
+            self.crits_user = self.configp.get('Maltrieve', 'crits_user')
+            self.crits_key = self.configp.get('Maltrieve', 'crits_key')
+            self.crits_source = self.configp.get('Maltrieve', 'crits_source')
+        else:
+            self.crits = False
 
 
 def upload_crits(response, md5, cfg):
