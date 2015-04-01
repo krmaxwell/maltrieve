@@ -29,12 +29,13 @@ import re
 import resource
 import sys
 import tempfile
+from urlparse import urlparse
+
 import feedparser
 import grequests
 import magic
 import requests
 from bs4 import BeautifulSoup
-from urlparse import urlparse
 
 
 class config:
@@ -286,7 +287,7 @@ def main():
     past_urls = set()
 
     args = setup_args(sys.argv)
-    cfg = config(args, 'maltrieve.cfg')
+    cfg = config(args[1:], 'maltrieve.cfg')
 
     if cfg.proxy:
         logging.info('Using proxy {proxy}'.format(proxy=cfg.proxy))
@@ -337,7 +338,7 @@ def main():
     print "Downloading samples, check log for details"
 
     malware_urls -= past_urls
-    reqs = [grequests.get(url, headers=headers, proxies=cfg.proxy) for url in malware_urls]
+    reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg.proxy) for url in malware_urls]
     for chunk in chunker(reqs, 32):
         malware_downloads = grequests.map(chunk)
         for each in malware_downloads:
