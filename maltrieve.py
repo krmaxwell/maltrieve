@@ -287,7 +287,7 @@ def main():
     past_urls = set()
 
     args = setup_args(sys.argv)
-    cfg = config(args, 'maltrieve.cfg')
+    cfg = config(args[1:], 'maltrieve.cfg')
 
     if cfg.proxy:
         logging.info('Using proxy {proxy}'.format(proxy=cfg.proxy))
