@@ -2,6 +2,8 @@
 [![Stories in In Progress](https://badge.waffle.io/krmaxwell/maltrieve.png?label=in%20progress&title=In%20Progress)](https://waffle.io/krmaxwell/maltrieve)
 [![Circle CI](https://circleci.com/gh/krmaxwell/maltrieve/tree/dev.svg?style=svg)](https://circleci.com/gh/krmaxwell/maltrieve/tree/dev)
 [![Coverage Status](https://coveralls.io/repos/krmaxwell/maltrieve/badge.svg?branch=dev)](https://coveralls.io/r/krmaxwell/maltrieve?branch=dev)
+[![Code Health](https://landscape.io/github/krmaxwell/maltrieve/dev/landscape.svg?style=flat)](https://landscape.io/github/krmaxwell/maltrieve/dev)
+
 ```
  _______ _______        _______  ______ _____ _______ _    _ _______
  |  |  | |_____| |         |    |_____/   |   |______  \  /  |______
