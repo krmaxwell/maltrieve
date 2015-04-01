@@ -158,8 +158,12 @@ def upload_crits(response, md5, cfg):
                                  domain_data['domain'], md5, domain_response_data)
             else:
                 logging.info("Submission of %s failed: %d", url, domain_response.status_code)
-        except:
-            logging.info("Exception caught from CRITs when submitting domain")
+        except requests.ConnectionError:
+            logging.info("Could not connect to CRITs when submitting domain %s", domain_data['domain'])
+        except requests.ConnectTimeout:
+            logging.info("Timed out connecting to CRITs when submitting domain %s", domain_data['domain'])
+        except requests.HTTPError:
+            logging.info("HTTP error when submitting domain %s to CRITs", domain_data['domain'])
 
         # Submit sample
         url = "{srv}/api/v1/samples/".format(srv=cfg.crits)
@@ -188,9 +192,13 @@ def upload_crits(response, md5, cfg):
                 else:
                     logging.info("Submitted sample %s to CRITs, response was %r", md5, sample_response_data)
             else:
-                logging.info("Submission of %s failed: %d}", md5, sample_response.status_code)
-        except:
-            logging.info("Exception caught from CRITs when submitting sample")
+                logging.info("Submission of sample %s failed: %d}", md5, sample_response.status_code)
+        except requests.ConnectionError:
+            logging.info("Could not connect to CRITs when submitting sample %s", md5)
+        except requests.ConnectTimeout:
+            logging.info("Timed out connecting to CRITs when submitting sample %s", md5)
+        except requests.HTTPError:
+            logging.info("HTTP error when submitting sample %s to CRITs", md5)
 
         # Create a relationship for the sample and domain
         url = "{srv}/api/v1/relationships/".format(srv=cfg.crits)
@@ -214,10 +222,13 @@ def upload_crits(response, md5, cfg):
                 if relationship_response.status_code != requests.codes.ok:
                     logging.info("Submitted relationship info for %s to CRITs, response was %r",
                                  md5, domain_response_data)
-            except:
-                # TODO: need informative but still shorter message
-                logging.info("Relationship submission skipped.")
-            return True
+            except requests.ConnectionError:
+                logging.info("Could not connect to CRITs when submitting relationship for sample %s", md5)
+            except requests.ConnectTimeout:
+                logging.info("Timed out connecting to CRITs when submitting relationship for sample %s", md5)
+            except requests.HTTPError:
+                logging.info("HTTP error when submitting relationship for sample %s to CRITs", md5)
+                return True
         else:
             return False
 
