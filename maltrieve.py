@@ -39,7 +39,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-class config:
+class config(object):
 
     """ Class for holding global configuration setup """
 
