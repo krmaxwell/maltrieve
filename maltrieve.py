@@ -20,6 +20,7 @@
 
 import argparse
 import ConfigParser
+import datetime
 import hashlib
 import json
 import logging
@@ -109,12 +110,117 @@ class config:
             os.remove(temp_path)
 
         logging.info('Using {dir} as dump directory'.format(dir=self.dumpdir))
+        self.logheaders = self.configp.get('Maltrieve', 'logheaders')
 
         # TODO: Merge these
         self.vxcage = args.vxcage or self.configp.has_option('Maltrieve', 'vxcage')
         self.cuckoo = args.cuckoo or self.configp.has_option('Maltrieve', 'cuckoo')
         self.viper = args.viper or self.configp.has_option('Maltrieve', 'viper')
-        self.logheaders = self.configp.get('Maltrieve', 'logheaders')
+
+        # CRITs
+        self.crits = args.crits or self.configp.get('Maltrieve', 'crits')
+        self.crits_user = self.configp.get('Maltrieve', 'crits_user')
+        self.crits_key = self.configp.get('Maltrieve', 'crits_key')
+        self.crits_source = self.configp.get('Maltrieve', 'crits_source')
+
+
+def upload_crits(response, md5, cfg):
+    if response:
+        url_tag = urlparse(response.url)
+        mime_type = magic.from_buffer(response.content, mime=True)
+        files = {'filedata': (md5, response.content)}
+        headers = {'User-agent': 'Maltrieve'}
+        zip_files = ['application/zip', 'application/gzip', 'application/x-7z-compressed']
+        rar_files = ['application/x-rar-compressed']
+        inserted_domain = False
+        inserted_sample = False
+
+        # submit domain / IP
+        # TODO: identify if it is a domain or IP and submit accordingly
+        url = "{srv}/api/v1/domains/".format(srv=cfg.crits)
+        domain_data = {
+            'api_key': cfg.crits_key,
+            'username': cfg.crits_user,
+            'source': cfg.crits_source,
+            'domain': url_tag.netloc
+        }
+        try:
+            # Note that this request does NOT go through proxies
+            logging.debug("Domain submission: {url}|{data}".format(url=url, data=domain_data))
+            domain_response = requests.post(url, headers=headers, data=domain_data)
+            # pylint says "Instance of LookupDict has no 'ok' member"
+            if domain_response.status_code == requests.codes.ok:
+                domain_response_data = domain_response.json()
+                if domain_response_data['return_code'] == 0:
+                    inserted_domain = True
+                else:
+                    logging.info("Submitted domain info {dom} for {md5} to CRITs, response was {data}".format(dom=domain_data['domain'],
+                                                                                                              md5=md5,
+                                                                                                              data=domain_response_data))
+            else:
+                logging.info("Submission of {url} failed: {code}".format(url=url, code=domain_response.status_code))
+        except:
+            logging.info("Exception caught from CRITs when submitting domain")
+
+        # Submit sample
+        url = "{srv}/api/v1/samples/".format(srv=cfg.crits)
+        if mime_type in zip_files:
+            file_type = 'zip'
+        elif mime_type in rar_files:
+            file_type = 'rar'
+        else:
+            file_type = 'raw'
+        sample_data = {
+            'api_key': cfg.crits_key,
+            'username': cfg.crits_user,
+            'source': cfg.crits_source,
+            'upload_type': 'file',
+            'md5': md5,
+            'file_format': file_type  # must be type zip, rar, or raw
+        }
+        try:
+            # Note that this request does NOT go through proxies
+            sample_response = requests.post(url, headers=headers, files=files, data=sample_data, verify=False)
+            # pylint says "Instance of LookupDict has no 'ok' member"
+            if sample_response.status_code == requests.codes.ok:
+                sample_response_data = sample_response.json()
+                if sample_response_data['return_code'] == 0:
+                    inserted_sample = True
+                else:
+                    logging.info("Submitted sample {md5} to CRITs, response was {data}".format(md5=md5,
+                                                                                               data=sample_response_data))
+            else:
+                logging.info("Submission of {md5} failed: {code}".format(md5=md5, code=sample_response.status_code))
+        except:
+            logging.info("Exception caught from CRITs when submitting sample")
+
+        # Create a relationship for the sample and domain
+        url = "{srv}/api/v1/relationships/".format(srv=cfg.crits)
+        if (inserted_sample and inserted_domain):
+            relationship_data = {
+                'api_key': cfg.crits_key,
+                'username': cfg.crits_user,
+                'source': cfg.crits_source,
+                'right_type': domain_response_data['type'],
+                'right_id': domain_response_data['id'],
+                'left_type': sample_response_data['type'],
+                'left_id': sample_response_data['id'],
+                'rel_type': 'Downloaded_From',
+                'rel_confidence': 'high',
+                'rel_date': datetime.datetime.now()
+            }
+            try:
+                # Note that this request does NOT go through proxies
+                relationship_response = requests.post(url, headers=headers, data=relationship_data, verify=False)
+                # pylint says "Instance of LookupDict has no 'ok' member"
+                if relationship_response.status_code != requests.codes.ok:
+                    logging.info("Submitted relationship info for {md5} to CRITs, response was {data}".format(md5=md5, data=domain_response_data))
+            except:
+                # TODO: need informative but still shorter message
+                logging.info("Relationship submission skipped.")
+            return True
+        else:
+            return False
 
 
 def upload_vxcage(response, md5, cfg):
@@ -122,7 +228,7 @@ def upload_vxcage(response, md5, cfg):
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
         tags = {'tags': url_tag.netloc + ',Maltrieve'}
-        url = "{srv}/malware/add".format(cfg.vxcage)
+        url = "{srv}/malware/add".format(srv=cfg.vxcage)
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
@@ -193,6 +299,7 @@ def save_malware(response, cfg):
     # Assume that external repo means we don't need to write to file as well.
     stored = False
     # Submit to external services
+
     # TODO: merge these
     if cfg.vxcage:
         stored = upload_vxcage(response, md5, cfg) or stored
@@ -200,6 +307,8 @@ def save_malware(response, cfg):
         stored = upload_cuckoo(response, md5, cfg) or stored
     if cfg.viper:
         stored = upload_viper(response, md5, cfg) or stored
+    if cfg.crits:
+        stored = upload_crits(response, md5, cfg) or stored
     # else save to disk
     if not stored:
         if cfg.sort_mime:
@@ -267,11 +376,14 @@ def setup_args(args):
                         help="Define dump directory for retrieved files")
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
-    parser.add_argument("-x", "--vxcage",
-                        help="Dump the files to a VxCage instance",
+    parser.add_argument("-r", "--crits",
+                        help="Dump the file to a Crits instance.",
                         action="store_true", default=False)
     parser.add_argument("-v", "--viper",
                         help="Dump the files to a Viper instance",
+                        action="store_true", default=False)
+    parser.add_argument("-x", "--vxcage",
+                        help="Dump the file to a VxCage instance",
                         action="store_true", default=False)
     parser.add_argument("-c", "--cuckoo",
                         help="Enable Cuckoo analysis", action="store_true", default=False)
