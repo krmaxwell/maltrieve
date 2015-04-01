@@ -154,8 +154,9 @@ def upload_crits(response, md5, cfg):
                 if domain_response_data['return_code'] == 0:
                     inserted_domain = True
                 else:
-                    logging.info("Submitted domain info for {md5} to CRITs, response was {data}".format(md5=md5,
-                                                                                                        data=domain_response_data))
+                    logging.info("Submitted domain info {dom} for {md5} to CRITs, response was {data}".format(dom=domain_data['domain'],
+                                                                                                              md5=md5,
+                                                                                                              data=domain_response_data))
             else:
                 logging.info("Submission of {url} failed: {code}".format(url=url, code=domain_response.status_code))
         except:
@@ -183,11 +184,15 @@ def upload_crits(response, md5, cfg):
             # pylint says "Instance of LookupDict has no 'ok' member"
             if sample_response.status_code == requests.codes.ok:
                 sample_response_data = sample_response.json()
-                logging.info("Submitted sample info for {md5} to CRITs".format(md5=md5))
                 if sample_response_data['return_code'] == 0:
                     inserted_sample = True
+                else:
+                    logging.info("Submitted sample {md5} to CRITs, response was {data}".format(md5=md5,
+                                                                                               data=sample_response_data))
+            else:
+                logging.info("Submission of {md5} failed: {code}".format(md5=md5, code=sample_response.status_code))
         except:
-            logging.info("Exception caught from CRITs when submitting sample: {code}".format(code=sample_response.status_code))
+            logging.info("Exception caught from CRITs when submitting sample")
 
         # Create a relationship for the sample and domain
         url = "{srv}/api/v1/relationships/".format(srv=cfg.crits)
@@ -208,13 +213,14 @@ def upload_crits(response, md5, cfg):
                 # Note that this request does NOT go through proxies
                 relationship_response = requests.post(url, headers=headers, data=relationship_data, verify=False)
                 # pylint says "Instance of LookupDict has no 'ok' member"
-                if relationship_response.status_code == requests.codes.ok:
-                    logging.info("Submitted relationship info for {md5} to CRITs".format(md5=md5))
+                if relationship_response.status_code != requests.codes.ok:
+                    logging.info("Submitted relationship info for {md5} to CRITs, response was {data}".format(md5=md5, data=domain_response_data))
             except:
                 # TODO: need informative but still shorter message
                 logging.info("Relationship submission skipped.")
+            return True
         else:
-            logging.info("Skipping adding relationship. CRITs could not process domain or sample.")
+            return False
 
 
 def upload_vxcage(response, md5, cfg):
