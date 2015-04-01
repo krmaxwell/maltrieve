@@ -2,6 +2,8 @@
 [![Stories in In Progress](https://badge.waffle.io/krmaxwell/maltrieve.png?label=in%20progress&title=In%20Progress)](https://waffle.io/krmaxwell/maltrieve)
 [![Circle CI](https://circleci.com/gh/krmaxwell/maltrieve/tree/dev.svg?style=svg)](https://circleci.com/gh/krmaxwell/maltrieve/tree/dev)
 [![Coverage Status](https://coveralls.io/repos/krmaxwell/maltrieve/badge.svg?branch=dev)](https://coveralls.io/r/krmaxwell/maltrieve?branch=dev)
+[![Code Health](https://landscape.io/github/krmaxwell/maltrieve/dev/landscape.svg?style=flat)](https://landscape.io/github/krmaxwell/maltrieve/dev)
+
 ```
  _______ _______        _______  ______ _____ _______ _    _ _______
  |  |  | |_____| |         |    |_____/   |   |______  \  /  |______
@@ -48,6 +50,8 @@ Maltrieve requires the following dependencies:
 
 With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get install python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. After that, just `pip install -e .`.  You may need to prepend that with ```sudo``` if not running in a virtual environment, but using such an environment is highly encouraged.
 
+Alternately, avoid all of that by using the [Docker image](https://registry.hub.docker.com/u/technoskald/maltrieve/)
+
 ## Usage
 
 __Basic execution:__ `maltrieve` (if installed normally) or ```python maltrieve.py``` (if just downloaded and run)
@@ -66,6 +70,7 @@ optional arguments:
                         Define file for logging progress
   -x, --vxcage          Dump the files to a VxCage instance
   -v, --viper           Dump the files to a Viper instance
+  -r, --crits           Dump the file and domain to a CRITs instance
   -c, --cuckoo          Enable Cuckoo analysis
   -s, --sort_mime       Sort files by MIME type
 
