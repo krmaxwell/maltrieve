@@ -159,7 +159,7 @@ def upload_crits(response, md5, cfg):
             else:
                 logging.info("Submission of {url} failed: {code}".format(url=url, code=domain_response.status_code))
         except:
-            logging.info("Exception caught from CRITs when submitting domain: {response}".format(code=domain_response))
+            logging.info("Exception caught from CRITs when submitting domain")
 
         # Submit sample
         url = "{srv}/api/v1/samples/".format(srv=cfg.crits)
@@ -222,7 +222,7 @@ def upload_vxcage(response, md5, cfg):
         url_tag = urlparse(response.url)
         files = {'file': (md5, response.content)}
         tags = {'tags': url_tag.netloc + ',Maltrieve'}
-        url = "{srv}/malware/add".format(cfg.vxcage)
+        url = "{srv}/malware/add".format(srv=cfg.vxcage)
         headers = {'User-agent': 'Maltrieve'}
         try:
             # Note that this request does NOT go through proxies
