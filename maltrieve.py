@@ -127,9 +127,9 @@ class config(object):
 
     def check_proxy(self):
         if self.proxy:
-            logging.info('Using proxy {proxy}'.format(proxy=self.proxy))
+            logging.info('Using proxy %s', self.proxy)
             my_ip = requests.get('http://ipinfo.io/ip', proxies=self.proxy).text
-            logging.info('External sites see {ip}'.format(ip=my_ip))
+            logging.info('External sites see %s', my_ip)
             print 'External sites see {ip}'.format(ip=my_ip)
 
 
