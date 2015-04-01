@@ -84,6 +84,9 @@ class config(object):
         else:
             self.white_list = False
 
+        if args.inputfile:
+            self.inputfile = args.inputfile
+
         # make sure we can open the directory for writing
         if args.dumpdir:
             self.dumpdir = args.dumpdir
@@ -387,6 +390,7 @@ def setup_args(args):
                         help="Define HTTP proxy as address:port")
     parser.add_argument("-d", "--dumpdir",
                         help="Define dump directory for retrieved files")
+    parser.add_argument("-i", "--inputfile", help="File of URLs to process")
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
     parser.add_argument("-r", "--crits",
