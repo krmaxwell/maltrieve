@@ -338,7 +338,7 @@ def main():
     print "Downloading samples, check log for details"
 
     malware_urls -= past_urls
-    reqs = [grequests.get(url, headers=headers, proxies=cfg.proxy) for url in malware_urls]
+    reqs = [grequests.get(url, timeout=60, headers=headers, proxies=cfg.proxy) for url in malware_urls]
     for chunk in chunker(reqs, 32):
         malware_downloads = grequests.map(chunk)
         for each in malware_downloads:
