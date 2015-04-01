@@ -464,6 +464,11 @@ def main():
         if hasattr(response, 'status_code') and response.status_code == 200:
             malware_urls.update(source_urls[response.url](response.text))
 
+    if cfg.inputfile:
+        with open(cfg.inputfile, 'rb') as f:
+            moar_urls = list(f)
+        malware_urls.update(moar_urls)
+
     print "Downloading samples, check log for details"
 
     malware_urls -= past_urls
