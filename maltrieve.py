@@ -169,8 +169,6 @@ def upload_crits(response, md5, cfg):
                 logging.info("Submission of %s failed: %d", url, domain_response.status_code)
         except requests.exceptions.ConnectionError:
             logging.info("Could not connect to CRITs when submitting domain %s", domain_data['domain'])
-        except requests.exceptions.ConnectTimeout:
-            logging.info("Timed out connecting to CRITs when submitting domain %s", domain_data['domain'])
         except requests.exceptions.HTTPError:
             logging.info("HTTP error when submitting domain %s to CRITs", domain_data['domain'])
 
@@ -204,8 +202,6 @@ def upload_crits(response, md5, cfg):
                 logging.info("Submission of sample %s failed: %d}", md5, sample_response.status_code)
         except requests.exceptions.ConnectionError:
             logging.info("Could not connect to CRITs when submitting sample %s", md5)
-        except requests.exceptions.ConnectTimeout:
-            logging.info("Timed out connecting to CRITs when submitting sample %s", md5)
         except requests.exceptions.HTTPError:
             logging.info("HTTP error when submitting sample %s to CRITs", md5)
 
@@ -233,8 +229,6 @@ def upload_crits(response, md5, cfg):
                                  md5, domain_response_data)
             except requests.exceptions.ConnectionError:
                 logging.info("Could not connect to CRITs when submitting relationship for sample %s", md5)
-            except requests.exceptions.ConnectTimeout:
-                logging.info("Timed out connecting to CRITs when submitting relationship for sample %s", md5)
             except requests.exceptions.HTTPError:
                 logging.info("HTTP error when submitting relationship for sample %s to CRITs", md5)
                 return True
