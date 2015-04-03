@@ -23,11 +23,6 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 * [CleanMX](http://support.clean-mx.de/clean-mx/xmlviruses.php?)
 * [ZeusTracker](https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries)
 
-These lists will be implemented if/when they return to activity.
-
-* [Malware Blacklist](http://www.malwareblacklist.com)
-* [NovCon Minotaur](http://minotauranalysis.com)
-
 Other improvements include:
 
 * Proxy support
