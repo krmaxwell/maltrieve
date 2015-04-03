@@ -42,10 +42,20 @@ def test_alt_config():
     assert cmp(cfg.proxy, test_proxy) == 0
     assert cfg.black_list == ['text/html', 'text/plain']
     assert cfg.white_list == ['application/pdf', 'application/x-dosexec']
+    assert cfg.crits == 'http://127.0.0.1:8080'
+    assert cfg.crits_user == 'maltrieve'
+    assert cfg.crits_key == 'YOUR_API_KEY_HERE'
+    assert cfg.crits_source == 'maltrieve'
 
 
 def test_create_default_dumpdir():
     args = maltrieve.setup_args(['-d', '/'])
+    cfg = maltrieve.config(args, 'maltrieve-test.cfg')
+    assert cfg.dumpdir == '/tmp/malware'
+
+
+def test_create_default_dumpdir_when_specified_doesnt_exist():
+    args = maltrieve.setup_args(['-d', '/_nope_'])
     cfg = maltrieve.config(args, 'maltrieve-test.cfg')
     assert cfg.dumpdir == '/tmp/malware'
 
