@@ -1,6 +1,8 @@
 import os
+import subprocess
 
 import maltrieve
+import markdown
 import requests
 
 
@@ -142,3 +144,8 @@ def test_sort_mime():
     r = requests.get('http://xwell.org/assets/docs/test.pdf')
     assert maltrieve.save_malware(r, cfg)
     assert os.access('archive-test/application_pdf/b9ff662486d448da7b60ba6234867c65', os.F_OK)
+
+
+def test_README_links():
+    markdown.markdownFromFile(input='README.md', output='README.html')
+    assert subprocess.call(['linkchecker', '--check-extern', 'README.html']) == 0

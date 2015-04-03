@@ -25,8 +25,8 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 
 These lists will be implemented if/when they return to activity.
 
-* [Malware Blacklist](http://www.malwareblacklist.com/showMDL.php)
-* [NovCon Minotaur](http://minotauranalysis.com/malwarelist-urls.aspx)
+* [Malware Blacklist](http://www.malwareblacklist.com)
+* [NovCon Minotaur](http://minotauranalysis.com)
 
 Other improvements include:
 
@@ -79,11 +79,33 @@ optional arguments:
 ### Configuration File
 Many of Maltrieve's command line options can be specified in ```maltrieve.cfg```.
 
+## Automated Execution (Optional)
+Cron can be used to automate the execution of Maltrieve. The following example is provided to help get you started. It will create a cron job that will run Maltrieve every day at 2:01 as a standard user. That said, we recommend enhancing this by creating a custom script for production environments.
+
+### Ubuntu
+As a user execute
+```
+crontab -e
+```
+If installed normally, add the following to the end of the file.
+```
+01 02 * * * maltrieve <optional flags>
+```
+If downloaded to a folder and executed, add the following to the end of the file.
+```
+01 02 * * * cd </folder/location> && /usr/bin/python maltrieve.py <optional flags>
+```
+### Redhat
+Redhat systems will need to ensure that the user is added to the /etc/cron.allow file.
+
+
+## Other Tools
+
+Maltrieve doesn't do analysis. In addition to the integrations listed above, we can recommend using [VirusTotalApi](https://github.com/doomedraven/VirusTotalApi) for working with [VirusTotal](https://www.virustotal.com). [Malwr](https://malwr.com) is a similar site based on Cuckoo Sandbox.
 
 ## License
 
 Released under GPL version 3. See the [LICENSE](./LICENSE) file for full details.
-
 
 ## Known bugs
 

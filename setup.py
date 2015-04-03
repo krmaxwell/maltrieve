@@ -20,7 +20,9 @@ setup(name='maltrieve',
           'pre-commit',
           'pytest',
           'pytest-cov',
-          'coveralls'
+          'coveralls',
+          'LinkChecker',
+          'markdown'
       ],
       package_dir={'maltrieve': 'src'},
       packages=['maltrieve'],
