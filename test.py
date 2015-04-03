@@ -17,6 +17,33 @@ def test_saving_args():
     assert args.sort_mime
 
 
+def test_read_alt_config():
+    args = maltrieve.setup_args(['--config', 'maltrieve-test.cfg'])
+    assert args.config == "maltrieve-test.cfg"
+
+
+def test_config_args():
+    args = maltrieve.setup_args(['-l', 'testlog', '-p', '127.0.0.1:8080', '-d', '/tmp/mwtest'])
+    cfg = maltrieve.config(args, 'maltrieve-test.cfg')
+    assert cfg.logfile == 'testlog'
+    test_proxy = {'http': '127.0.0.1:8080'}
+    assert cmp(cfg.proxy, test_proxy) == 0
+    assert cfg.dumpdir == '/tmp/mwtest'
+
+
+def test_alt_config():
+    args = maltrieve.setup_args(['--config', 'maltrieve-test.cfg'])
+    cfg = maltrieve.config(args, args.config)
+    assert cfg.dumpdir == 'archive-test'
+    assert cfg.logfile == 'maltrieve-test.log'
+    test_ua = {'User-Agent': 'Test-Agent'}
+    assert cmp(cfg.useragent, test_ua) == 0
+    test_proxy = {'http': '127.0.0.1:3128'}
+    assert cmp(cfg.proxy, test_proxy) == 0
+    assert cfg.black_list == ['text/html', 'text/plain']
+    assert cfg.white_list == ['application/pdf', 'application/x-dosexec']
+
+
 def test_parse_simple_list():
     source = requests.get('http://xwell.org/assets/maltrieve-test.txt').text
     assert maltrieve.process_simple_list(source) == \
