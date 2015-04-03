@@ -95,13 +95,13 @@ class config(object):
         if not os.path.exists(self.dumpdir):
             try:
                 os.makedirs(self.dumpdir)
-            except IOError:
+            except OSError:
                 logging.error('Could not create %s, using default', self.dumpdir)
                 self.dumpdir = '/tmp/malware'
 
         try:
             fd, temp_path = tempfile.mkstemp(dir=self.dumpdir)
-        except IOError:
+        except OSError:
             logging.error('Could not open %s for writing, using default', self.dumpdir)
             self.dumpdir = '/tmp/malware'
         else:

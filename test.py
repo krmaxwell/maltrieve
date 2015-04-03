@@ -44,6 +44,12 @@ def test_alt_config():
     assert cfg.white_list == ['application/pdf', 'application/x-dosexec']
 
 
+def test_create_default_dumpdir():
+    args = maltrieve.setup_args(['-d', '/'])
+    cfg = maltrieve.config(args, 'maltrieve-test.cfg')
+    assert cfg.dumpdir == '/tmp/malware'
+
+
 def test_parse_simple_list():
     source = requests.get('http://xwell.org/assets/maltrieve-test.txt').text
     assert maltrieve.process_simple_list(source) == \
