@@ -408,6 +408,7 @@ def setup_args(args):
                         help="Enable Cuckoo analysis", action="store_true", default=False)
     parser.add_argument("-s", "--sort_mime",
                         help="Sort files by MIME type", action="store_true", default=False)
+    parser.add_argument("--config", help="Alternate config file (default maltrieve.cfg)")
 
     return parser.parse_args(args)
 
@@ -453,7 +454,10 @@ def main():
     past_urls = set()
 
     args = setup_args(sys.argv[1:])
-    cfg = config(args, 'maltrieve.cfg')
+    if args.config:
+        cfg = config(args, args.config)
+    else:
+        cfg = config(args, 'maltrieve.cfg')
     cfg.check_proxy()
 
     hashes = load_hashes('hashes.json')
