@@ -31,28 +31,25 @@
         <hr>
 
         <section id="main_content">
-          <h2>
-<a id="maltrieve" class="anchor" href="#maltrieve" aria-hidden="true"><span class="octicon octicon-link"></span></a>Maltrieve</h2>
+          <p><a href="https://waffle.io/krmaxwell/maltrieve"><img src="https://badge.waffle.io/krmaxwell/maltrieve.png?label=ready&amp;title=Ready" alt="Stories in Ready"></a>
+<a href="https://waffle.io/krmaxwell/maltrieve"><img src="https://badge.waffle.io/krmaxwell/maltrieve.png?label=in%20progress&amp;title=In%20Progress" alt="Stories in In Progress"></a>
+<a href="https://circleci.com/gh/krmaxwell/maltrieve/tree/dev"><img src="https://circleci.com/gh/krmaxwell/maltrieve/tree/dev.svg?style=svg" alt="Circle CI"></a>
+<a href="https://coveralls.io/r/krmaxwell/maltrieve?branch=dev"><img src="https://coveralls.io/repos/krmaxwell/maltrieve/badge.svg?branch=dev" alt="Coverage Status"></a>
+<a href="https://landscape.io/github/krmaxwell/maltrieve/dev"><img src="https://landscape.io/github/krmaxwell/maltrieve/dev/landscape.svg?style=flat" alt="Code Health"></a></p>
 
-<p><a href="https://waffle.io/krmaxwell/maltrieve"><img src="https://badge.waffle.io/krmaxwell/maltrieve.png?label=ready&amp;title=Ready" alt="Stories in Ready"></a>
-<a href="https://waffle.io/krmaxwell/maltrieve"><img src="https://badge.waffle.io/krmaxwell/maltrieve.png?label=in%20progress&amp;title=In%20Progress" alt="Stories in In Progress"></a></p>
+<h2>
+<a id="maltrieve" class="anchor" href="#maltrieve" aria-hidden="true"><span class="octicon octicon-link"></span></a>Maltrieve</h2>
 
 <p>Maltrieve originated as a fork of <a href="https://github.com/ricardo-dias/mwcrawler">mwcrawler</a>. It retrieves malware directly from the sources as listed at a number of sites. Currently we crawl the following:</p>
 
 <ul>
 <li><a href="http://malc0de.com/rss">Malc0de</a></li>
-<li><a href="http://www.malwareblacklist.com/mbl.xml">Malware Black List</a></li>
 <li><a href="http://www.malwaredomainlist.com/hostslist/mdl.xml">Malware Domain List</a></li>
+<li><a href="http://malwareurls.joxeankoret.com/normal.txt">Malware URLs</a></li>
 <li><a href="http://vxvault.siri-urz.net/URL_List.php">VX Vault</a></li>
 <li><a href="http://urlquery.net/">URLquery</a></li>
 <li><a href="http://support.clean-mx.de/clean-mx/xmlviruses.php?">CleanMX</a></li>
 <li><a href="https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries">ZeusTracker</a></li>
-</ul>
-
-<p>These lists will be implemented if/when they return to activity.</p>
-
-<ul>
-<li><a href="http://minotauranalysis.com/malwarelist-urls.aspx">NovCon Minotaur</a></li>
 </ul>
 
 <p>Other improvements include:</p>
@@ -83,6 +80,8 @@
 
 <p>With the exception of the Python header files, these can all be found in <a href="./requirements.txt">requirements.txt</a>. On Debian-based distributions, run <code>sudo apt-get install python-dev</code>. On Red Hat-based distributions, run <code>sudo yum install python-devel</code>. After that, just <code>pip install -e .</code>.  You may need to prepend that with <code>sudo</code> if not running in a virtual environment, but using such an environment is highly encouraged.</p>
 
+<p>Alternately, avoid all of that by using the <a href="https://registry.hub.docker.com/u/technoskald/maltrieve/">Docker image</a></p>
+
 <h2>
 <a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
 
@@ -103,6 +102,7 @@ optional arguments:
                         Define file for logging progress
   -x, --vxcage          Dump the files to a VxCage instance
   -v, --viper           Dump the files to a Viper instance
+  -r, --crits           Dump the file and domain to a CRITs instance
   -c, --cuckoo          Enable Cuckoo analysis
   -s, --sort_mime       Sort files by MIME type
 
@@ -112,6 +112,39 @@ optional arguments:
 <a id="configuration-file" class="anchor" href="#configuration-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>Configuration File</h3>
 
 <p>Many of Maltrieve's command line options can be specified in <code>maltrieve.cfg</code>.</p>
+
+<h2>
+<a id="automated-execution-optional" class="anchor" href="#automated-execution-optional" aria-hidden="true"><span class="octicon octicon-link"></span></a>Automated Execution (Optional)</h2>
+
+<p>Cron can be used to automate the execution of Maltrieve. The following example is provided to help get you started. It will create a cron job that will run Maltrieve every day at 2:01 as a standard user. That said, we recommend enhancing this by creating a custom script for production environments.</p>
+
+<h3>
+<a id="ubuntu" class="anchor" href="#ubuntu" aria-hidden="true"><span class="octicon octicon-link"></span></a>Ubuntu</h3>
+
+<p>As a user, execute</p>
+
+<pre><code>crontab -e
+</code></pre>
+
+<p>If installed normally, add the following to the end of the file.</p>
+
+<pre><code>01 02 * * * maltrieve &lt;optional flags&gt;
+</code></pre>
+
+<p>If downloaded to a folder and executed, add the following to the end of the file.</p>
+
+<pre><code>01 02 * * * cd &lt;/folder/location&gt; &amp;&amp; /usr/bin/python maltrieve.py &lt;optional flags&gt;
+</code></pre>
+
+<h3>
+<a id="red-hat" class="anchor" href="#red-hat" aria-hidden="true"><span class="octicon octicon-link"></span></a>Red Hat</h3>
+
+<p>Red Hat systems will need to ensure that the user is added to the <code>/etc/cron.allow</code> file.</p>
+
+<h2>
+<a id="other-tools" class="anchor" href="#other-tools" aria-hidden="true"><span class="octicon octicon-link"></span></a>Other Tools</h2>
+
+<p>Maltrieve doesn't do analysis. In addition to the integrations listed above, we can recommend using <a href="https://github.com/doomedraven/VirusTotalApi">VirusTotalApi</a> for working with <a href="https://www.virustotal.com">VirusTotal</a>. <a href="https://malwr.com">Malwr</a> is a similar site based on Cuckoo Sandbox.</p>
 
 <h2>
 <a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
@@ -126,7 +159,7 @@ optional arguments:
 <h2>
 <a id="how-you-can-help" class="anchor" href="#how-you-can-help" aria-hidden="true"><span class="octicon octicon-link"></span></a>How you can help</h2>
 
-<p>Aside from pull requests, non-developers can open issues on <a href="https://github.com/krmaxwell/maltrieve">Github</a>. Things we'd really appreciate:</p>
+<p>Aside from pull requests, non-developers can open issues on <a href="https://github.com/krmaxwell/maltrieve">GitHub</a>. Things we'd really appreciate:</p>
 
 <ul>
 <li>Bug reports, preferably with error logs</li>
