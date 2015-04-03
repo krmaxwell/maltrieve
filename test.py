@@ -91,6 +91,11 @@ def test_save_hashes():
     test_load_hashes('test-save-hashes.json')
 
 
+def test_empty_urls():
+    fname = 'maltrieve.py'
+    assert maltrieve.load_urls(fname) == set()
+
+
 def test_load_urls(urlfile='test-load-urls.json'):
     assert maltrieve.load_urls(urlfile) == \
         set(['http://example.com/badurl'])
