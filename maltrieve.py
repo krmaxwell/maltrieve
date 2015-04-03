@@ -303,13 +303,13 @@ def save_malware(response, cfg):
     mime_type = magic.from_buffer(data, mime=True)
     if mime_type in cfg.black_list:
         logging.info('%s in ignore list for %s', mime_type, url)
-        return
+        return False
     if cfg.white_list:
         if mime_type in cfg.white_list:
             pass
         else:
             logging.info('%s not in whitelist for %s', mime_type, url)
-            return
+            return False
 
     # Hash and log
     md5 = hashlib.md5(data).hexdigest()
@@ -495,10 +495,8 @@ def main():
         for each in malware_downloads:
             if not each or each.status_code != 200:
                 continue
-            md5 = save_malware(each, cfg)
-            if not md5:
-                continue
-            past_urls.add(each.url)
+            if save_malware(each, cfg):
+                past_urls.add(each.url)
 
     print "Completed downloads"
 

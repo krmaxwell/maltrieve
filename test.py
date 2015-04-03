@@ -1,3 +1,5 @@
+import os
+
 import maltrieve
 import requests
 
@@ -98,3 +100,25 @@ def test_save_urls():
     urls = set(['http://example.com/badurl'])
     maltrieve.save_urls(urls, 'test-save-urls.json')
     test_load_urls('test-save-urls.json')
+
+
+def test_save_blacklist():
+    args = maltrieve.setup_args(['--config', 'maltrieve-test.cfg'])
+    cfg = maltrieve.config(args, args.config)
+    r = requests.get('http://xwell.org')
+    assert maltrieve.save_malware(r, cfg) is False
+
+
+def test_save_whitelist_fail():
+    args = maltrieve.setup_args(['--config', 'maltrieve-test.cfg'])
+    cfg = maltrieve.config(args, args.config)
+    r = requests.get('http://xwell.org/assets/images/dodecahedron.png')
+    assert maltrieve.save_malware(r, cfg) is False
+
+
+def test_save_whitelist_passk():
+    args = maltrieve.setup_args(['--config', 'maltrieve-test.cfg'])
+    cfg = maltrieve.config(args, args.config)
+    r = requests.get('http://xwell.org/assets/docs/test.pdf')
+    assert maltrieve.save_malware(r, cfg)
+    assert os.access('archive-test/b9ff662486d448da7b60ba6234867c65', os.F_OK)
