@@ -85,6 +85,8 @@ class config(object):
 
         if args.inputfile:
             self.inputfile = args.inputfile
+        else:
+            self.inputfile = None
 
         # make sure we can open the directory for writing
         if args.dumpdir:
