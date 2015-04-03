@@ -72,13 +72,16 @@ optional arguments:
 ```
 
 ### Configuration File
+
 Many of Maltrieve's command line options can be specified in ```maltrieve.cfg```.
 
 ## Automated Execution (Optional)
+
 Cron can be used to automate the execution of Maltrieve. The following example is provided to help get you started. It will create a cron job that will run Maltrieve every day at 2:01 as a standard user. That said, we recommend enhancing this by creating a custom script for production environments.
 
 ### Ubuntu
-As a user execute
+
+As a user, execute
 ```
 crontab -e
 ```
@@ -90,8 +93,9 @@ If downloaded to a folder and executed, add the following to the end of the file
 ```
 01 02 * * * cd </folder/location> && /usr/bin/python maltrieve.py <optional flags>
 ```
-### Redhat
-Redhat systems will need to ensure that the user is added to the /etc/cron.allow file.
+### Red Hat
+
+Red Hat systems will need to ensure that the user is added to the `/etc/cron.allow` file.
 
 
 ## Other Tools
@@ -109,7 +113,7 @@ We list all the bugs we know about (plus some things we know we need to add) at 
 
 ## How you can help
 
-Aside from pull requests, non-developers can open issues on [Github](https://github.com/krmaxwell/maltrieve). Things we'd really appreciate:
+Aside from pull requests, non-developers can open issues on [GitHub](https://github.com/krmaxwell/maltrieve). Things we'd really appreciate:
 
 * Bug reports, preferably with error logs
 * Suggestions of additional sources for malware lists
