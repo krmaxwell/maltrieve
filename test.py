@@ -116,9 +116,18 @@ def test_save_whitelist_fail():
     assert maltrieve.save_malware(r, cfg) is False
 
 
-def test_save_whitelist_passk():
+def test_save_whitelist_pass():
     args = maltrieve.setup_args(['--config', 'maltrieve-test.cfg'])
     cfg = maltrieve.config(args, args.config)
     r = requests.get('http://xwell.org/assets/docs/test.pdf')
     assert maltrieve.save_malware(r, cfg)
     assert os.access('archive-test/b9ff662486d448da7b60ba6234867c65', os.F_OK)
+
+
+def test_sort_mime():
+    args = maltrieve.setup_args(['--config', 'maltrieve-test.cfg'])
+    cfg = maltrieve.config(args, args.config)
+    cfg.sort_mime = True
+    r = requests.get('http://xwell.org/assets/docs/test.pdf')
+    assert maltrieve.save_malware(r, cfg)
+    assert os.access('archive-test/application_pdf/b9ff662486d448da7b60ba6234867c65', os.F_OK)
