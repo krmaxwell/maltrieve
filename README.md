@@ -25,8 +25,8 @@ Maltrieve originated as a fork of [mwcrawler](https://github.com/ricardo-dias/mw
 
 These lists will be implemented if/when they return to activity.
 
-* [Malware Blacklist](http://www.malwareblacklist.com/showMDL.php)
-* [NovCon Minotaur](http://minotauranalysis.com/malwarelist-urls.aspx)
+* [Malware Blacklist](http://www.malwareblacklist.com)
+* [NovCon Minotaur](http://minotauranalysis.com)
 
 Other improvements include:
 

@@ -54,3 +54,4 @@ grequests
 *.bak
 *.json
 screenlog*
+README.html
