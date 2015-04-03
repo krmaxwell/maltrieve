@@ -25,7 +25,6 @@ import hashlib
 import json
 import logging
 import os
-import pickle
 import re
 import resource
 import sys
@@ -96,13 +95,13 @@ class config(object):
         if not os.path.exists(self.dumpdir):
             try:
                 os.makedirs(self.dumpdir)
-            except IOError:
+            except OSError:
                 logging.error('Could not create %s, using default', self.dumpdir)
                 self.dumpdir = '/tmp/malware'
 
         try:
             fd, temp_path = tempfile.mkstemp(dir=self.dumpdir)
-        except IOError:
+        except OSError:
             logging.error('Could not open %s for writing, using default', self.dumpdir)
             self.dumpdir = '/tmp/malware'
         else:
@@ -125,6 +124,13 @@ class config(object):
             self.crits_source = self.configp.get('Maltrieve', 'crits_source')
         else:
             self.crits = False
+
+    def check_proxy(self):
+        if self.proxy:
+            logging.info('Using proxy %s', self.proxy)
+            my_ip = requests.get('http://ipinfo.io/ip', proxies=self.proxy).text
+            logging.info('External sites see %s', my_ip)
+            print 'External sites see {ip}'.format(ip=my_ip)
 
 
 def upload_crits(response, md5, cfg):
@@ -151,7 +157,7 @@ def upload_crits(response, md5, cfg):
             # Note that this request does NOT go through proxies
             logging.debug("Domain submission: %s|%r", url, domain_data)
             domain_response = requests.post(url, headers=headers, data=domain_data)
-            # pylint says "Instance of LookupDict has no 'ok' member"
+            # pylint says "Instance of LookupDict has no 'ok' member" but it's wrong, I checked
             if domain_response.status_code == requests.codes.ok:
                 domain_response_data = domain_response.json()
                 if domain_response_data['return_code'] == 0:
@@ -161,11 +167,9 @@ def upload_crits(response, md5, cfg):
                                  domain_data['domain'], md5, domain_response_data)
             else:
                 logging.info("Submission of %s failed: %d", url, domain_response.status_code)
-        except requests.ConnectionError:
+        except requests.exceptions.ConnectionError:
             logging.info("Could not connect to CRITs when submitting domain %s", domain_data['domain'])
-        except requests.ConnectTimeout:
-            logging.info("Timed out connecting to CRITs when submitting domain %s", domain_data['domain'])
-        except requests.HTTPError:
+        except requests.exceptions.HTTPError:
             logging.info("HTTP error when submitting domain %s to CRITs", domain_data['domain'])
 
         # Submit sample
@@ -187,7 +191,7 @@ def upload_crits(response, md5, cfg):
         try:
             # Note that this request does NOT go through proxies
             sample_response = requests.post(url, headers=headers, files=files, data=sample_data, verify=False)
-            # pylint says "Instance of LookupDict has no 'ok' member"
+            # pylint says "Instance of LookupDict has no 'ok' member" but it's wrong, I checked
             if sample_response.status_code == requests.codes.ok:
                 sample_response_data = sample_response.json()
                 if sample_response_data['return_code'] == 0:
@@ -196,11 +200,9 @@ def upload_crits(response, md5, cfg):
                     logging.info("Submitted sample %s to CRITs, response was %r", md5, sample_response_data)
             else:
                 logging.info("Submission of sample %s failed: %d}", md5, sample_response.status_code)
-        except requests.ConnectionError:
+        except requests.exceptions.ConnectionError:
             logging.info("Could not connect to CRITs when submitting sample %s", md5)
-        except requests.ConnectTimeout:
-            logging.info("Timed out connecting to CRITs when submitting sample %s", md5)
-        except requests.HTTPError:
+        except requests.exceptions.HTTPError:
             logging.info("HTTP error when submitting sample %s to CRITs", md5)
 
         # Create a relationship for the sample and domain
@@ -225,11 +227,9 @@ def upload_crits(response, md5, cfg):
                 if relationship_response.status_code != requests.codes.ok:
                     logging.info("Submitted relationship info for %s to CRITs, response was %r",
                                  md5, domain_response_data)
-            except requests.ConnectionError:
+            except requests.exceptions.ConnectionError:
                 logging.info("Could not connect to CRITs when submitting relationship for sample %s", md5)
-            except requests.ConnectTimeout:
-                logging.info("Timed out connecting to CRITs when submitting relationship for sample %s", md5)
-            except requests.HTTPError:
+            except requests.exceptions.HTTPError:
                 logging.info("HTTP error when submitting relationship for sample %s to CRITs", md5)
                 return True
         else:
@@ -297,13 +297,13 @@ def save_malware(response, cfg):
     mime_type = magic.from_buffer(data, mime=True)
     if mime_type in cfg.black_list:
         logging.info('%s in ignore list for %s', mime_type, url)
-        return
+        return False
     if cfg.white_list:
         if mime_type in cfg.white_list:
             pass
         else:
             logging.info('%s not in whitelist for %s', mime_type, url)
-            return
+            return False
 
     # Hash and log
     md5 = hashlib.md5(data).hexdigest()
@@ -402,8 +402,44 @@ def setup_args(args):
                         help="Enable Cuckoo analysis", action="store_true", default=False)
     parser.add_argument("-s", "--sort_mime",
                         help="Sort files by MIME type", action="store_true", default=False)
+    parser.add_argument("--config", help="Alternate config file (default maltrieve.cfg)")
 
     return parser.parse_args(args)
+
+
+def load_hashes(filename="hashes.json"):
+    if os.path.exists(filename):
+        with open(filename, 'rb') as hashfile:
+            hashes = set(json.load(hashfile))
+        logging.info('Loaded hashes from %s', filename)
+    else:
+        hashes = set()
+    return hashes
+
+
+def save_hashes(hashes, filename='hashes.json'):
+    logging.info('Dumping hashes to %s', filename)
+    with open(filename, 'w') as hashfile:
+        json.dump(list(hashes), hashfile, indent=2)
+
+
+def load_urls(filename='urls.json'):
+    if os.path.exists(filename):
+        try:
+            with open(filename, 'rb') as urlfile:
+                urls = set(json.load(urlfile))
+            logging.info('Loaded urls from %s', filename)
+        except ValueError:  # this usually happens when the file is empty
+            urls = set()
+    else:
+        urls = set()
+    return urls
+
+
+def save_urls(urls, filename='urls.json'):
+    logging.info('Dumping past URLs to %s', filename)
+    with open(filename, 'w') as urlfile:
+        json.dump(list(urls), urlfile, indent=2)
 
 
 def main():
@@ -412,30 +448,14 @@ def main():
     past_urls = set()
 
     args = setup_args(sys.argv[1:])
-    cfg = config(args, 'maltrieve.cfg')
+    if args.config:
+        cfg = config(args, args.config)
+    else:
+        cfg = config(args, 'maltrieve.cfg')
+    cfg.check_proxy()
 
-    if cfg.proxy:
-        logging.info('Using proxy %s', cfg.proxy)
-        my_ip = requests.get('http://ipinfo.io/ip', proxies=cfg.proxy).text
-        logging.info('External sites see %s', my_ip)
-        print 'External sites see {ip}'.format(ip=my_ip)
-
-    if os.path.exists('hashes.json'):
-        with open('hashes.json', 'rb') as hashfile:
-            hashes = json.load(hashfile)
-    elif os.path.exists('hashes.obj'):
-        with open('hashes.obj', 'rb') as hashfile:
-            hashes = pickle.load(hashfile)
-
-    if os.path.exists('urls.json'):
-        try:
-            with open('urls.json', 'rb') as urlfile:
-                past_urls = set(json.load(urlfile))
-        except ValueError:
-            pass
-    elif os.path.exists('urls.obj'):
-        with open('urls.obj', 'rb') as urlfile:
-            past_urls = pickle.load(urlfile)
+    hashes = load_hashes('hashes.json')
+    past_urls = load_urls('urls.json')
 
     print "Processing source URLs"
 
@@ -469,22 +489,13 @@ def main():
         for each in malware_downloads:
             if not each or each.status_code != 200:
                 continue
-            md5 = save_malware(each, cfg)
-            if not md5:
-                continue
-            past_urls.add(each.url)
+            if save_malware(each, cfg):
+                past_urls.add(each.url)
 
     print "Completed downloads"
 
-    # TODO: move to functions
-    if past_urls:
-        logging.info('Dumping past URLs to file')
-        with open('urls.json', 'w') as urlfile:
-            json.dump(list(past_urls), urlfile)
-
-    if hashes:
-        with open('hashes.json', 'w') as hashfile:
-            json.dump(hashes, hashfile)
+    save_urls(past_urls, 'urls.json')
+    save_hashes(hashes, 'hashes.json')
 
 
 if __name__ == "__main__":
