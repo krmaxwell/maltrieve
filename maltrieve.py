@@ -83,6 +83,9 @@ class config(object):
         else:
             self.white_list = False
 
+        if args.inputfile:
+            self.inputfile = args.inputfile
+
         # make sure we can open the directory for writing
         if args.dumpdir:
             self.dumpdir = args.dumpdir
@@ -387,6 +390,7 @@ def setup_args(args):
                         help="Define HTTP proxy as address:port")
     parser.add_argument("-d", "--dumpdir",
                         help="Define dump directory for retrieved files")
+    parser.add_argument("-i", "--inputfile", help="File of URLs to process")
     parser.add_argument("-l", "--logfile",
                         help="Define file for logging progress")
     parser.add_argument("-r", "--crits",
@@ -479,6 +483,11 @@ def main():
     for response in source_lists:
         if hasattr(response, 'status_code') and response.status_code == 200:
             malware_urls.update(source_urls[response.url](response.text))
+
+    if cfg.inputfile:
+        with open(cfg.inputfile, 'rb') as f:
+            moar_urls = list(f)
+        malware_urls.update(moar_urls)
 
     print "Downloading samples, check log for details"
 

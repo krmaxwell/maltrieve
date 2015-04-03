@@ -33,6 +33,12 @@ def test_config_args():
     assert cfg.dumpdir == '/tmp/mwtest'
 
 
+def test_inputfile():
+    args = maltrieve.setup_args(['-i', 'test-input'])
+    cfg = maltrieve.config(args, 'maltrieve-test.cfg')
+    assert cfg.inputfile == 'test-input'
+
+
 def test_alt_config():
     args = maltrieve.setup_args(['--config', 'maltrieve-test.cfg'])
     cfg = maltrieve.config(args, args.config)
