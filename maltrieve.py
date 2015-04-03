@@ -157,7 +157,7 @@ def upload_crits(response, md5, cfg):
             # Note that this request does NOT go through proxies
             logging.debug("Domain submission: %s|%r", url, domain_data)
             domain_response = requests.post(url, headers=headers, data=domain_data)
-            # pylint says "Instance of LookupDict has no 'ok' member"
+            # pylint says "Instance of LookupDict has no 'ok' member" but it's wrong, I checked
             if domain_response.status_code == requests.codes.ok:
                 domain_response_data = domain_response.json()
                 if domain_response_data['return_code'] == 0:
@@ -191,7 +191,7 @@ def upload_crits(response, md5, cfg):
         try:
             # Note that this request does NOT go through proxies
             sample_response = requests.post(url, headers=headers, files=files, data=sample_data, verify=False)
-            # pylint says "Instance of LookupDict has no 'ok' member"
+            # pylint says "Instance of LookupDict has no 'ok' member" but it's wrong, I checked
             if sample_response.status_code == requests.codes.ok:
                 sample_response_data = sample_response.json()
                 if sample_response_data['return_code'] == 0:
@@ -411,14 +411,14 @@ def load_hashes(filename="hashes.json"):
     if os.path.exists(filename):
         with open(filename, 'rb') as hashfile:
             hashes = set(json.load(hashfile))
-        logging.info('Loaded hashes from {f}'.format(f=filename))
+        logging.info('Loaded hashes from %s', filename)
     else:
         hashes = set()
     return hashes
 
 
 def save_hashes(hashes, filename='hashes.json'):
-    logging.info('Dumping hashes to {f}'.format(f=filename))
+    logging.info('Dumping hashes to %s', filename)
     with open(filename, 'w') as hashfile:
         json.dump(list(hashes), hashfile, indent=2)
 
@@ -428,7 +428,7 @@ def load_urls(filename='urls.json'):
         try:
             with open(filename, 'rb') as urlfile:
                 urls = set(json.load(urlfile))
-            logging.info('Loaded urls from {f}'.format(f=filename))
+            logging.info('Loaded urls from %s', filename)
         except ValueError:  # this usually happens when the file is empty
             urls = set()
     else:
@@ -437,7 +437,7 @@ def load_urls(filename='urls.json'):
 
 
 def save_urls(urls, filename='urls.json'):
-    logging.info('Dumping past URLs to {f}'.format(f=filename))
+    logging.info('Dumping past URLs to %s', filename)
     with open(filename, 'w') as urlfile:
         json.dump(list(urls), urlfile, indent=2)
 
