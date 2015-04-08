@@ -56,6 +56,7 @@ def test_alt_config():
     assert cfg.crits_user == 'maltrieve'
     assert cfg.crits_key == 'YOUR_API_KEY_HERE'
     assert cfg.crits_source == 'maltrieve'
+    assert cfg.inputfile is None
 
 
 def test_create_default_dumpdir():

@@ -44,13 +44,13 @@ Maltrieve requires the following dependencies:
 * [python-magic](https://pypi.python.org/pypi/python-magic/)
 * [Requests](http://www.python-requests.org)
 
-With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get install python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. After that, just `pip install -e .`.  You may need to prepend that with ```sudo``` if not running in a virtual environment, but using such an environment is highly encouraged.
+With the exception of the Python header files, these can all be found in [requirements.txt](./requirements.txt). On Debian-based distributions, run `sudo apt-get install python-dev`. On Red Hat-based distributions, run `sudo yum install python-devel`. After that, just `pip install -e .`.  You may need to prepend that with `sudo` if not running in a virtual environment, but using such an environment is highly encouraged.
 
 Alternately, avoid all of that by using the [Docker image](https://registry.hub.docker.com/u/technoskald/maltrieve/)
 
 ## Usage
 
-__Basic execution:__ `maltrieve` (if installed normally) or ```python maltrieve.py``` (if just downloaded and run)
+__Basic execution:__ `maltrieve` (if installed normally) or `python maltrieve.py` (if just downloaded and run)
 
 ### Options
 ```
@@ -72,9 +72,13 @@ optional arguments:
 
 ```
 
+### Proxy support
+
+Proxy support can be defined via the command line or configuration file, or via the environment variables HTTP_PROXY and HTTPS_PROXY. To authenticate to a proxy, just use `username:password` in the URL, such as `http://myuser:mypass@ourproxy:3128`.
+
 ### Configuration File
 
-Many of Maltrieve's command line options can be specified in ```maltrieve.cfg```.
+Many of Maltrieve's command line options can be specified in `maltrieve.cfg`.
 
 ## Automated Execution (Optional)
 
