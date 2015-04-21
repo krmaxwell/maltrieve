@@ -469,7 +469,7 @@ def main():
     source_urls = {'https://zeustracker.abuse.ch/monitor.php?urlfeed=binaries': process_xml_list_desc,
                    'http://www.malwaredomainlist.com/hostslist/mdl.xml': process_xml_list_desc,
                    'http://malc0de.com/rss/': process_xml_list_desc,
-                   'http://vxvault.siri-urz.net/URL_List.php': process_simple_list,
+                   'http://vxvault.net/URL_List.php': process_simple_list,
                    'http://urlquery.net/': process_urlquery,
                    'http://support.clean-mx.de/clean-mx/rss?scope=viruses&limit=0%2C64': process_xml_list_title,
                    'http://malwareurls.joxeankoret.com/normal.txt': process_simple_list}
