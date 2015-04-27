@@ -123,7 +123,7 @@ class config(object):
 
         # CRITs
         if args.crits or self.configp.has_option('Maltrieve', 'crits'):
-            self.crits = args.crits or self.configp.get('Maltrieve', 'crits')
+            self.crits = self.configp.get('Maltrieve', 'crits')
             self.crits_user = self.configp.get('Maltrieve', 'crits_user')
             self.crits_key = self.configp.get('Maltrieve', 'crits_key')
             self.crits_source = self.configp.get('Maltrieve', 'crits_source')
@@ -161,7 +161,7 @@ def upload_crits(response, md5, cfg):
         try:
             # Note that this request does NOT go through proxies
             logging.debug("Domain submission: %s|%r", url, domain_data)
-            domain_response = requests.post(url, headers=headers, data=domain_data)
+            domain_response = requests.post(url, headers=headers, data=domain_data, verify=False)
             # pylint says "Instance of LookupDict has no 'ok' member" but it's wrong, I checked
             if domain_response.status_code == requests.codes.ok:
                 domain_response_data = domain_response.json()
